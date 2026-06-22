@@ -1,0 +1,32 @@
+<?php
+
+$title = 'Chart of Accounts';
+$this->headTitle($title);
+?>
+    <h1><?= $this->escapeHtml($title) ?></h1>
+
+<p>
+    <a href="<?= $this->url('account', ['action' => 'add']) ?>" class="btn btn-primary">Add New Account</a>
+</p>
+
+<table class="table">
+    <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>&nbsp;</th>
+    </tr>
+    <?php foreach ($accounts as $account) : ?>
+        <tr>
+            <td><?= $this->escapeHtml($account->getName()) ?></td>
+            <td>
+                <?php if (! is_null($account->getType())): ?>
+                    <?= $this->escapeHtml(ucfirst($account->getType()->value)) ?>
+                <?php endif; ?>
+            </td>
+            <td>
+                <a href="<?= $this->url('account', ['action' => 'edit', 'id' => $account->getAccountId()]) ?>">Edit</a>
+                <a href="<?= $this->url('account', ['action' => 'delete', 'id' => $account->getAccountId()]) ?>">Delete</a>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</table>

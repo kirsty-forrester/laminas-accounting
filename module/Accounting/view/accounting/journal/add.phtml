@@ -1,0 +1,158 @@
+<?php
+
+$title = 'New Journal Entry';
+$this->headTitle($title);
+?>
+<h1><?= $this->escapeHtml($title) ?></h1>
+
+<form method="post" action="<?= $this->url('journal', ['action' => 'add']) ?>" id="journal-form">
+    <div class="form-group mb-3">
+        <label for="date">Date</label>
+        <input type="date" class="form-control" id="date" name="date"
+               value="<?= date('Y-m-d') ?>" required>
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="description">Description</label>
+        <input type="text" class="form-control" id="description" name="description"
+               placeholder="e.g. Office supplies purchased on credit" required>
+    </div>
+
+    <table class="table" id="entries-table">
+        <thead>
+            <tr>
+                <th>Account</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="entries-body">
+            <tr class="entry-row">
+                <td>
+                    <select class="form-control" name="entries[0][account_id]" required>
+                        <option value="">-- Select Account --</option>
+                        <?php foreach ($accounts as $account) : ?>
+                            <option value="<?= $account->getAccountId() ?>">
+                                <?= $this->escapeHtml($account->getName()) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control debit-input" name="entries[0][debit]" placeholder="0.00"></td>
+                <td><input type="text" class="form-control credit-input" name="entries[0][credit]" placeholder="0.00"></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>
+            </tr>
+            <tr class="entry-row">
+                <td>
+                    <select class="form-control" name="entries[1][account_id]" required>
+                        <option value="">-- Select Account --</option>
+                        <?php foreach ($accounts as $account) : ?>
+                            <option value="<?= $account->getAccountId() ?>">
+                                <?= $this->escapeHtml($account->getName()) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+                <td><input type="text" class="form-control debit-input" name="entries[1][debit]" placeholder="0.00"></td>
+                <td><input type="text" class="form-control credit-input" name="entries[1][credit]" placeholder="0.00"></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Totals</th>
+                <th id="total-debits">0.00</th>
+                <th id="total-credits">0.00</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="mb-3">
+        <button type="button" class="btn btn-secondary" id="add-row">+ Add Line</button>
+    </div>
+
+    <p id="balance-warning" class="text-danger" style="display:none;">
+        Debits and credits must be equal.
+    </p>
+
+    <button type="submit" class="btn btn-primary" id="post-btn" disabled>Post</button>
+</form>
+
+<?php
+// Build the account options HTML once for JavaScript to reuse
+$optionsHtml = '<option value="">-- Select Account --</option>';
+foreach ($accounts as $account) {
+    $optionsHtml .= sprintf(
+        '<option value="%d">%s</option>',
+        $account->getAccountId(),
+        $this->escapeHtml($account->getName()),
+    );
+}
+?>
+
+<script>
+(function () {
+    var accountOptions = <?= json_encode($optionsHtml) ?>;
+    var tbody = document.getElementById('entries-body');
+    var rowIndex = 2;
+
+    document.getElementById('add-row').addEventListener('click', function () {
+        var tr = document.createElement('tr');
+        tr.className = 'entry-row';
+        tr.innerHTML =
+            '<td><select class="form-control" name="entries[' + rowIndex + '][account_id]" required>'
+                + accountOptions + '</select></td>'
+            + '<td><input type="text" class="form-control debit-input" name="entries[' + rowIndex + '][debit]" placeholder="0.00"></td>'
+            + '<td><input type="text" class="form-control credit-input" name="entries[' + rowIndex + '][credit]" placeholder="0.00"></td>'
+            + '<td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>';
+        tbody.appendChild(tr);
+        rowIndex++;
+        updateTotals();
+    });
+
+    tbody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-row')) {
+            var rows = tbody.querySelectorAll('.entry-row');
+            if (rows.length > 2) {
+                e.target.closest('tr').remove();
+                updateTotals();
+            }
+        }
+    });
+
+    tbody.addEventListener('input', function (e) {
+        if (e.target.classList.contains('debit-input')
+            || e.target.classList.contains('credit-input')) {
+            updateTotals();
+        }
+    });
+
+    function parsePennies(value) {
+        var f = parseFloat(value);
+        if (isNaN(f)) return 0;
+        return Math.round(f * 100);
+    }
+
+    function updateTotals() {
+        var debits = 0;
+        var credits = 0;
+
+        document.querySelectorAll('.debit-input').forEach(function (input) {
+            debits += parsePennies(input.value);
+        });
+        document.querySelectorAll('.credit-input').forEach(function (input) {
+            credits += parsePennies(input.value);
+        });
+
+        document.getElementById('total-debits').textContent = (debits / 100).toFixed(2);
+        document.getElementById('total-credits').textContent = (credits / 100).toFixed(2);
+
+        var balanced = debits === credits && debits > 0;
+        document.getElementById('post-btn').disabled = !balanced;
+        document.getElementById('balance-warning').style.display =
+            (debits > 0 || credits > 0) && !balanced ? '' : 'none';
+    }
+})();
+</script>
