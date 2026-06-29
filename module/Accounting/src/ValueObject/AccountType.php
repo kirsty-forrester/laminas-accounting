@@ -1,6 +1,6 @@
 <?php
 
-namespace Accounting\Model;
+namespace Accounting\ValueObject;
 
 enum AccountType: string
 {
