@@ -2,7 +2,7 @@
 
 namespace Accounting\Exceptions;
 
-use Accounting\Model\Money;
+use Accounting\ValueObject\Money;
 use DomainException;
 
 final class UnbalancedJournalEntryException extends DomainException

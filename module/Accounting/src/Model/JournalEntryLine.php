@@ -2,6 +2,9 @@
 
 namespace Accounting\Model;
 
+use Accounting\ValueObject\Direction;
+use Accounting\ValueObject\Money;
+
 final class JournalEntryLine
 {
     private ?int $journalEntryLineId = null;

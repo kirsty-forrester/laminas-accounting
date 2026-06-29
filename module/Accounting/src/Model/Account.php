@@ -2,6 +2,8 @@
 
 namespace Accounting\Model;
 
+use Accounting\ValueObject\AccountType;
+
 class Account
 {
     private ?int $accountId = null;

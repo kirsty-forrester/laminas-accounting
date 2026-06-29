@@ -3,7 +3,7 @@
 namespace Accounting\Repository;
 
 use Accounting\Model\Account;
-use Accounting\Model\AccountType;
+use Accounting\ValueObject\AccountType;
 use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Db\Sql\Sql;
 class AccountRepository implements AccountRepositoryInterface

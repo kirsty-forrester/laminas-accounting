@@ -2,7 +2,7 @@
 
 namespace Accounting\Form;
 
-use Accounting\Model\AccountType;
+use Accounting\ValueObject\AccountType;
 use Laminas\Form\Element\Hidden;
 use Laminas\Form\Element\Submit;
 use Laminas\Form\Element\Select;

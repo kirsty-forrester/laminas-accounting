@@ -2,6 +2,8 @@
 
 namespace Accounting\Model;
 
+use Accounting\ValueObject\Direction;
+use Accounting\ValueObject\Money;
 use Accounting\Exceptions\UnbalancedJournalEntryException;
 use DateTimeImmutable;
 

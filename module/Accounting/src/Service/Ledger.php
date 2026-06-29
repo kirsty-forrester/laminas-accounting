@@ -2,8 +2,8 @@
 
 namespace Accounting\Service;
 
-use Accounting\Model\Direction;
-use Accounting\Model\Money;
+use Accounting\ValueObject\Direction;
+use Accounting\ValueObject\Money;
 use Accounting\Repository\AccountRepositoryInterface;
 use Accounting\Repository\JournalEntryRepositoryInterface;
 
