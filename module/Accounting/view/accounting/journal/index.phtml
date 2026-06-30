@@ -1,1 +1,81 @@
-<h1>Journal List</h1>
+<?php
+
+use Accounting\ValueObject\Direction;
+use Accounting\ValueObject\JournalEntryStatus;
+use Accounting\ValueObject\Money;
+
+$title = 'Journal Entries';
+$this->headTitle($title);
+
+// Bootstrap contextual colour for each lifecycle status.
+$statusColours = [
+    JournalEntryStatus::Draft->value     => 'secondary',
+    JournalEntryStatus::Submitted->value => 'info',
+    JournalEntryStatus::Approved->value  => 'primary',
+    JournalEntryStatus::Posted->value    => 'success',
+    JournalEntryStatus::Voided->value    => 'dark',
+];
+
+// An entry's value is its total debits (which equal its credits when balanced).
+$entryTotal = function ($entry): Money {
+    $total = Money::zero();
+    foreach ($entry->getLines() as $line) {
+        if ($line->getDirection() === Direction::Debit) {
+            $total = $total->add($line->getAmount());
+        }
+    }
+    return $total;
+};
+
+// all() yields a forward-only result set; buffer it so we can test for
+// emptiness before iterating the table body.
+$entries = iterator_to_array($journal_entries, false);
+?>
+<h1><?= $this->escapeHtml($title) ?></h1>
+
+<p>
+    <a href="<?= $this->url('journal', ['action' => 'add']) ?>" class="btn btn-primary">New Journal Entry</a>
+</p>
+
+<?php if (count($entries) === 0) : ?>
+    <div class="alert alert-info">
+        No journal entries yet.
+        <a href="<?= $this->url('journal', ['action' => 'add']) ?>" class="alert-link">Create the first one</a>.
+    </div>
+<?php else : ?>
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th class="text-end">Amount</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($entries as $entry) : ?>
+            <?php $status = $entry->getStatus(); ?>
+            <tr>
+                <td><?= $this->escapeHtml((string) $entry->getJournalEntryId()) ?></td>
+                <td><?= $this->escapeHtml($entry->getDate()->format('Y-m-d')) ?></td>
+                <td><?= $this->escapeHtml($entry->getDescription()) ?></td>
+                <td>
+                    <span class="badge bg-<?= $this->escapeHtmlAttr($statusColours[$status->value] ?? 'secondary') ?>">
+                        <?= $this->escapeHtml(ucfirst($status->value)) ?>
+                    </span>
+                    <?php if (! $entry->isBalanced()) : ?>
+                        <span class="badge bg-danger">Unbalanced</span>
+                    <?php endif; ?>
+                </td>
+                <td class="text-end"><?= $this->escapeHtml($entryTotal($entry)->format()) ?></td>
+                <td class="text-end">
+                    <a href="<?= $this->url('journal', ['action' => 'view', 'id' => $entry->getJournalEntryId()]) ?>"
+                       class="btn btn-sm btn-outline-secondary">View</a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>

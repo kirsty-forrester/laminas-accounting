@@ -4,43 +4,69 @@ namespace Accounting\Persistence;
 
 use Accounting\Model\Account;
 use Accounting\Model\AccountRepositoryInterface;
-use Accounting\ValueObject\AccountType;
 use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Db\Sql\Sql;
+use Laminas\Db\Adapter\Driver\ResultInterface;
+use Laminas\Hydrator\HydratorInterface;
+use Laminas\Db\ResultSet\HydratingResultSet;
+use InvalidArgumentException;
+use RuntimeException;
+
 class AccountRepository implements AccountRepositoryInterface
 {
-    public function __construct(private AdapterInterface $adapter) {}
+    public function __construct(
+        private AdapterInterface $db,
+        private HydratorInterface $hydrator,
+        private Account $accountPrototype,
+    ) {}
 
-    public function find(int $id): ?Account
+    public function find(int $id): Account
     {
-        $sql = new Sql($this->adapter);
-        $select = $sql->select('account')->where(['account_id' => $id]);
-        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
+        $sql       = new Sql($this->db);
+        $select    = $sql->select('account');
+        $select->where(['account_id = ?' => $id]);
 
-        if (!$row) {
-            return null;
+        $statement = $sql->prepareStatementForSqlObject($select);
+        $result    = $statement->execute();
+
+        if (! $result instanceof ResultInterface || ! $result->isQueryResult()) {
+            throw new RuntimeException(sprintf(
+                'Failed retrieving account with identifier "%s"; unknown database error.',
+                $id
+            ));
         }
 
-        return $this->hydrate($row);
+        $resultSet = new HydratingResultSet($this->hydrator, $this->accountPrototype);
+        $resultSet->initialize($result);
+        $account = $resultSet->current();
+
+        if (! $account) {
+            throw new InvalidArgumentException(sprintf(
+                'Account with identifier "%s" not found.',
+                $id
+            ));
+        }
+
+        return $account;
     }
 
-    public function all(): array
+    public function all(): HydratingResultSet
     {
-        $sql = new Sql($this->adapter);
+        $resultSet = new HydratingResultSet($this->hydrator, $this->accountPrototype);
+
+        $sql    = new Sql($this->db);
         $select = $sql->select('account');
-        $results = $sql->prepareStatementForSqlObject($select)->execute();
+        $result = $sql->prepareStatementForSqlObject($select)->execute();
 
-        $accounts = [];
-
-        foreach ($results as $row) {
-            $accounts[] = $this->hydrate($row);
+        if ($result instanceof ResultInterface && $result->isQueryResult()) {
+            $resultSet->initialize($result);
         }
 
-        return $accounts;
+        return $resultSet;
     }
 
-    public function save(Account $account): void {
-        $sql = new Sql($this->adapter);
+    public function save(Account $account): Account {
+        $sql = new Sql($this->db);
         $data = [
             'name' => $account->getName(),
             'type' => $account->getType()->value,
@@ -49,18 +75,18 @@ class AccountRepository implements AccountRepositoryInterface
         if ($account->getAccountId()) {
             $update = $sql->update('account')->set($data)->where(['account_id' => $account->getAccountId()]);
             $sql->prepareStatementForSqlObject($update)->execute();
-        } else {
-            $insert = $sql->insert('account')->values($data);
-            $sql->prepareStatementForSqlObject($insert)->execute();
-        }
-    }
 
-    private function hydrate(array $row): Account
-    {
-        $account = new Account();
-        $account->setAccountId((int) $row['account_id']);
-        $account->setName($row['name']);
-        $account->setType(AccountType::from($row['type']));
-        return $account;
+            return $account;
+        }
+
+        $insert = $sql->insert('account')->values($data);
+        $result = $sql->prepareStatementForSqlObject($insert)->execute();
+
+        // Entity is immutable (no setters); return a new instance carrying the generated id.
+        return new Account(
+            (int) $result->getGeneratedValue(),
+            $account->getName(),
+            $account->getType(),
+        );
     }
 }

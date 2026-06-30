@@ -17,3 +17,29 @@ CREATE TABLE journal_entry_line (
    direction             TEXT    NOT NULL CHECK (direction IN ('debit', 'credit')),
    amount                INTEGER NOT NULL  -- pennies
 );
+
+-- Seed data: a realistic small-business chart of accounts.
+-- Clear any existing rows first so re-running this seed doesn't duplicate.
+DELETE FROM account;
+INSERT INTO account (name, type) VALUES
+    -- Assets ("has it" buckets)
+    ('Cash at Bank',            'asset'),
+    ('Petty Cash',              'asset'),
+    ('Accounts Receivable',     'asset'),
+    ('Inventory',               'asset'),
+    ('Office Equipment',        'asset'),
+    -- Liabilities (the lender's door)
+    ('Accounts Payable',        'liability'),
+    ('VAT Payable',             'liability'),
+    ('Bank Loan',               'liability'),
+    -- Equity (the owner's door)
+    ('Owner''s Capital',        'equity'),
+    ('Retained Earnings',       'equity'),
+    -- Income (the earnings door)
+    ('Sales Revenue',           'income'),
+    ('Interest Income',         'income'),
+    -- Expenses ("used it up" buckets)
+    ('Rent Expense',            'expense'),
+    ('Wages & Salaries',        'expense'),
+    ('Utilities Expense',       'expense'),
+    ('Office Supplies',         'expense');

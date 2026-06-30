@@ -37,9 +37,11 @@ class AccountController extends AbstractActionController
         }
 
         $data = $form->getData();
-        $account = new Account();
-        $account->setName($data['name']);
-        $account->setType(AccountType::from($data['account_type']));
+        $account = new Account(
+            null,
+            $data['name'],
+            AccountType::from($data['account_type']),
+        );
         $this->accountRepo->save($account);
 
         return $this->redirect()->toRoute('account');
@@ -47,7 +49,15 @@ class AccountController extends AbstractActionController
 
     public function editAction()
     {
+        $id = (int) $this->params()->fromRoute('id', 0);
 
+        if (0 === $id) {
+            return $this->redirect()->toRoute('accounts', ['action' => 'add']);
+        }
+
+        return [
+            'account' => $this->accountRepo->find($id),
+        ];
     }
 
     public function deleteAction()

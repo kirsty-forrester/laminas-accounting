@@ -9,15 +9,21 @@ use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\Money;
 use DateTimeImmutable;
 use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Hydrator\HydratorInterface;
+use Laminas\Db\ResultSet\HydratingResultSet;
 use Laminas\Db\Sql\Sql;
 
 class JournalEntryRepository implements JournalEntryRepositoryInterface
 {
-    public function __construct(private AdapterInterface $adapter) {}
+    public function __construct(
+        private AdapterInterface $db,
+        private HydratorInterface $hydrator,
+        private JournalEntry $journalEntryPrototype,
+    ) {}
 
     public function find(int $id): ?JournalEntry
     {
-        $sql = new Sql($this->adapter);
+        $sql = new Sql($this->db);
         $select = $sql->select('journal_entry')->where(['journal_entry_id' => $id]);
         $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
 
@@ -28,24 +34,24 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         return $this->hydrate($row);
     }
 
-    public function all(): array
+    public function all(): HydratingResultSet
     {
-        $sql = new Sql($this->adapter);
+        $resultSet = new HydratingResultSet($this->hydrator, $this->journalEntryPrototype);
+
+        $sql    = new Sql($this->db);
         $select = $sql->select('journal_entry');
-        $results = $sql->prepareStatementForSqlObject($select)->execute();
+        $result = $sql->prepareStatementForSqlObject($select)->execute();
 
-        $journalEntries = [];
-
-        foreach ($results as $row) {
-            $journalEntries[] = $this->hydrate($row);
+        if ($result instanceof ResultInterface && $result->isQueryResult()) {
+            $resultSet->initialize($result);
         }
 
-        return $journalEntries;
+        return $resultSet;
     }
 
-    public function save(JournalEntry $journalEntry): void
+    public function save(JournalEntry $journalEntry): JournalEntry
     {
-        $sql = new Sql($this->adapter);
+        $sql = new Sql($this->db);
         $data = [
             'date' => $journalEntry->getDate()->format('Y-m-d'),
             'description' => $journalEntry->getDescription(),
@@ -59,15 +65,24 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         } else {
             $insert = $sql->insert('journal_entry')->values($data);
             $result = $sql->prepareStatementForSqlObject($insert)->execute();
-            $journalEntry->setJournalEntryId((int) $result->getGeneratedValue());
+
+            // Entity is immutable (no setters); rebuild it with the generated id.
+            $journalEntry = new JournalEntry(
+                (int) $result->getGeneratedValue(),
+                $journalEntry->getDate(),
+                $journalEntry->getDescription(),
+                $journalEntry->getLines(),
+            );
         }
 
         $this->saveLines($journalEntry);
+
+        return $journalEntry;
     }
 
     private function saveLines(JournalEntry $journalEntry): void
     {
-        $sql = new Sql($this->adapter);
+        $sql = new Sql($this->db);
         $journalEntryId = $journalEntry->getJournalEntryId();
 
         // Replace the line set wholesale — simplest way to keep lines in sync.
@@ -89,32 +104,31 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
     {
         $journalEntryId = (int) $row['journal_entry_id'];
 
-        $journalEntry = new JournalEntry();
-        $journalEntry->setJournalEntryId($journalEntryId);
-        $journalEntry->setDate(new DateTimeImmutable($row['date']));
-        $journalEntry->setDescription($row['description']);
-        $journalEntry->setLines($this->linesFor($journalEntryId));
-
-        return $journalEntry;
+        return new JournalEntry(
+            $journalEntryId,
+            new DateTimeImmutable($row['date']),
+            $row['description'],
+            $this->linesFor($journalEntryId),
+        );
     }
 
     /** @return JournalEntryLine[] */
     private function linesFor(int $journalEntryId): array
     {
-        $sql = new Sql($this->adapter);
+        $sql = new Sql($this->db);
         $select = $sql->select('journal_entry_line')->where(['journal_entry_id' => $journalEntryId]);
         $results = $sql->prepareStatementForSqlObject($select)->execute();
 
         $lines = [];
 
         foreach ($results as $row) {
-            $line = new JournalEntryLine();
-            $line->setJournalEntryLineId((int) $row['journal_entry_line_id']);
-            $line->setJournalEntryId((int) $row['journal_entry_id']);
-            $line->setAccountId((int) $row['account_id']);
-            $line->setDirection(Direction::from($row['direction']));
-            $line->setAmount(Money::fromMinor((int) $row['amount']));
-            $lines[] = $line;
+            $lines[] = new JournalEntryLine(
+                (int) $row['journal_entry_line_id'],
+                (int) $row['journal_entry_id'],
+                (int) $row['account_id'],
+                Direction::from($row['direction']),
+                Money::fromMinor((int) $row['amount']),
+            );
         }
 
         return $lines;

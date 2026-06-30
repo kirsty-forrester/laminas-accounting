@@ -4,25 +4,29 @@ namespace Accounting\Model;
 
 use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\Money;
+use Accounting\ValueObject\JournalEntryStatus;
 use Accounting\Exceptions\UnbalancedJournalEntryException;
 use DateTimeImmutable;
 
-final class JournalEntry
+class JournalEntry
 {
-    private ?int $journalEntryId = null;
-    private DateTimeImmutable $date;
-    private string $description;
     /** @var JournalEntryLine[] */
-    private array $lines = [];
+    private array $lines;
+
+    /** @param JournalEntryLine[] $lines */
+    public function __construct(
+        private ?int $journalEntryId,
+        private DateTimeImmutable $date,
+        private JournalEntryStatus $status,
+        private string $description,
+        array $lines,
+    ) {
+        $this->lines = $lines;
+    }
 
     public function getJournalEntryId(): ?int
     {
         return $this->journalEntryId;
-    }
-
-    public function setJournalEntryId(int $journalEntryId): void
-    {
-        $this->journalEntryId = $journalEntryId;
     }
 
     public function getDate(): DateTimeImmutable
@@ -30,45 +34,89 @@ final class JournalEntry
         return $this->date;
     }
 
-    public function setDate(DateTimeImmutable $date): void
-    {
-        $this->date = $date;
-    }
-
     public function getDescription(): string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): void
-    {
-        $this->description = $description;
-    }
-
-    /** @return JournalEntryLine[] */
+    /**
+     * @return JournalEntryLine[]
+     */
     public function getLines(): array
     {
         return $this->lines;
     }
 
-    /** @param JournalEntryLine[] $lines */
-    public function setLines(array $lines): void
+    /**
+     * @return JournalEntryStatus
+     */
+    public function getStatus(): JournalEntryStatus
     {
-        $debits  = Money::zero();
-        $credits = Money::zero();
+        return $this->status;
+    }
 
-        foreach ($lines as $line) {
-            if ($line->getDirection() === Direction::Debit) {
-                $debits = $debits->add($line->getAmount());
-            } else {
-                $credits = $credits->add($line->getAmount());
+    public function isBalanced(): bool
+    {
+        return $this->totalFor(Direction::Debit)->equals($this->totalFor(Direction::Credit));
+    }
+
+    private function withStatus(JournalEntryStatus $status): self
+    {
+        return new self($this->journalEntryId, $this->date, $status, $this->description, $this->lines);
+    }
+
+    private function totalFor(Direction $direction): Money
+    {
+        $total = Money::zero();
+
+        foreach ($this->lines as $line) {
+            if ($line->getDirection() === $direction) {
+                $total = $total->add($line->getAmount());
             }
         }
 
-        if (! $debits->equals($credits)) {
-            throw new UnbalancedJournalEntryException($debits, $credits);
+        return $total;
+    }
+
+    private function guardCanTransitionTo(JournalEntryStatus $to): void
+    {
+        if (! $this->status->canTransitionTo($to)) {
+            throw new IllegalTransitionException($this->status, $to);
+        }
+    }
+
+    public function submit(): self
+    {
+        $this->guardCanTransitionTo(JournalEntryStatus::Submitted);
+
+        if (! $this->isBalanced()) {
+            throw new UnbalancedJournalEntryException(
+                $this->totalFor(Direction::Debit),
+                $this->totalFor(Direction::Credit),
+            );
         }
 
-        $this->lines = $lines;
+        return $this->withStatus(JournalEntryStatus::Submitted);
+    }
+
+    public function approve(): self
+    {
+        $this->guardCanTransitionTo(JournalEntryStatus::Approved);
+
+        return $this->withStatus(JournalEntryStatus::Approved);
+    }
+
+    public function post(): self
+    {
+        $this->guardCanTransitionTo(JournalEntryStatus::Posted);
+        
+        return $this->withStatus(JournalEntryStatus::Posted);
+    }
+    
+    public function void(): self
+    {
+        $this->guardCanTransitionTo(JournalEntryStatus::Voided);
+        
+        return $this->withStatus(JournalEntryStatus::Voided);
     }
 }
