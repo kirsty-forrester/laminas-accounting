@@ -2,7 +2,7 @@
 
 namespace Accounting\Controller;
 
-use Accounting\Repository\AccountRepositoryInterface;
+use Accounting\Model\AccountRepositoryInterface;
 use Laminas\Mvc\Controller\AbstractActionController;
 
 class JournalController extends AbstractActionController

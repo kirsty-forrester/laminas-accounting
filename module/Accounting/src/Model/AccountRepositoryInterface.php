@@ -1,8 +1,6 @@
 <?php
 
-namespace Accounting\Repository;
-
-use Accounting\Model\Account;
+namespace Accounting\Model;
 
 interface AccountRepositoryInterface
 {

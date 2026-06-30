@@ -2,12 +2,11 @@
 
 namespace Accounting\Controller;
 
-use Accounting\Repository\AccountRepositoryInterface;
+use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Form\AccountForm;
 use Accounting\Model\Account;
 use Accounting\ValueObject\AccountType;
 use Laminas\Mvc\Controller\AbstractActionController;
-use Laminas\View\Model\ViewModel;
 
 class AccountController extends AbstractActionController
 {
@@ -15,9 +14,9 @@ class AccountController extends AbstractActionController
 
     public function indexAction()
     {
-        return new ViewModel([
+        return [
             'accounts' => $this->accountRepo->all(),
-        ]);
+        ];
     }
 
     public function addAction()
@@ -53,6 +52,6 @@ class AccountController extends AbstractActionController
 
     public function deleteAction()
     {
-        
+
     }
 }

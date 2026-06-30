@@ -1,8 +1,9 @@
 <?php
 
-namespace Accounting\Repository;
+namespace Accounting\Persistence;
 
 use Accounting\Model\Account;
+use Accounting\Model\AccountRepositoryInterface;
 use Accounting\ValueObject\AccountType;
 use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Db\Sql\Sql;
@@ -13,7 +14,7 @@ class AccountRepository implements AccountRepositoryInterface
     public function find(int $id): ?Account
     {
         $sql = new Sql($this->adapter);
-        $select = $sql->select('account')->where(['account.id' => $id]);
+        $select = $sql->select('account')->where(['account_id' => $id]);
         $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
 
         if (!$row) {
@@ -47,6 +48,7 @@ class AccountRepository implements AccountRepositoryInterface
 
         if ($account->getAccountId()) {
             $update = $sql->update('account')->set($data)->where(['account_id' => $account->getAccountId()]);
+            $sql->prepareStatementForSqlObject($update)->execute();
         } else {
             $insert = $sql->insert('account')->values($data);
             $sql->prepareStatementForSqlObject($insert)->execute();

@@ -54,4 +54,33 @@ return [
             __DIR__ . '/../view',
         ],
     ],
+    'navigation' => [
+        'default' => [
+            [
+                'label' => 'Home',
+                'route' => 'home',
+            ],
+            [
+                'label' => 'Accounts',
+                'route' => 'accounts',
+                'pages' => [
+                    [
+                        'label'  => 'Add',
+                        'route'  => 'accounts',
+                        'action' => 'add',
+                    ],
+                    [
+                        'label'  => 'Edit',
+                        'route'  => 'accounts',
+                        'action' => 'edit',
+                    ],
+                    [
+                        'label'  => 'Delete',
+                        'route'  => 'accounts',
+                        'action' => 'delete',
+                    ],
+                ],
+            ],
+        ],
+    ],
 ];

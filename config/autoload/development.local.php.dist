@@ -19,5 +19,6 @@
 return [
     'view_manager' => [
         'display_exceptions' => true,
+        'config_cache_enabled' => false,
     ],
 ];

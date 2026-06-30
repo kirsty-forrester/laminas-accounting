@@ -9,13 +9,15 @@ $this->headTitle($title);
     <a href="<?= $this->url('account', ['action' => 'add']) ?>" class="btn btn-primary">Add New Account</a>
 </p>
 
+<?= $this->navigation('navigation')->menu() ?>
+
 <table class="table">
     <tr>
         <th>Name</th>
         <th>Type</th>
         <th>&nbsp;</th>
     </tr>
-    <?php foreach ($accounts as $account) : ?>
+    <?php foreach ($this->accounts as $account) : ?>
         <tr>
             <td><?= $this->escapeHtml($account->getName()) ?></td>
             <td>

@@ -1,6 +1,6 @@
 <?php
 
-namespace Accounting\Repository;
+namespace Accounting\Persistence;
 
 use Laminas\Db\Adapter\AdapterInterface;
 use Psr\Container\ContainerInterface;

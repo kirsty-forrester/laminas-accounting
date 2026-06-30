@@ -52,18 +52,18 @@ return [
 
     'service_manager' => [
         'aliases' => [
-            Repository\AccountRepositoryInterface::class
-            => Repository\AccountRepository::class,
-            Repository\JournalEntryRepositoryInterface::class
-            => Repository\JournalEntryRepository::class,
+            Model\AccountRepositoryInterface::class
+            => Persistence\AccountRepository::class,
+            Model\JournalEntryRepositoryInterface::class
+            => Persistence\JournalEntryRepository::class,
         ],
         'factories' => [
             Service\Ledger::class
             => Service\LedgerFactory::class,
-            Repository\AccountRepository::class
-            => Repository\AccountRepositoryFactory::class,
-            Repository\JournalEntryRepository::class
-            => Repository\JournalEntryRepositoryFactory::class,
+            Persistence\AccountRepository::class
+            => Persistence\AccountRepositoryFactory::class,
+            Persistence\JournalEntryRepository::class
+            => Persistence\JournalEntryRepositoryFactory::class,
         ],
     ],
 

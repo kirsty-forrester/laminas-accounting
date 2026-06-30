@@ -4,8 +4,8 @@ namespace Accounting\Service;
 
 use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\Money;
-use Accounting\Repository\AccountRepositoryInterface;
-use Accounting\Repository\JournalEntryRepositoryInterface;
+use Accounting\Model\AccountRepositoryInterface;
+use Accounting\Model\JournalEntryRepositoryInterface;
 
 final class Ledger
 {
