@@ -19,7 +19,7 @@ final class Ledger
         $account = $this->accounts->find($accountId);
         $balance = Money::zero();
 
-        foreach ($this->journalEntries->all() as $journalEntry) {
+        foreach ($this->journalEntries->posted() as $journalEntry) {
             foreach ($journalEntry->getLines() as $line) {
                 if ($line->getAccountId() !== $accountId) {
                     continue;
@@ -53,7 +53,7 @@ final class Ledger
             $balances[$id] = Money::zero();
         }
 
-        foreach ($this->journalEntries->all() as $journalEntry) {
+        foreach ($this->journalEntries->posted() as $journalEntry) {
             foreach ($journalEntry->getLines() as $line) {
                 $id = $line->getAccountId();
 

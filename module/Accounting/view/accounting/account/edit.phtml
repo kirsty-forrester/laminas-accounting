@@ -1,1 +1,35 @@
-<?php print_r($account); 
+<?php
+
+$title = 'Edit Account';
+$this->headTitle($title);
+
+// The id is carried in the pre-filled hidden field; the edit route needs it in the URL.
+$id = $form->get('account_id')->getValue();
+
+$form->setAttribute('action', $this->url('account', ['action' => 'edit', 'id' => $id]));
+$form->setAttribute('class', 'form-horizontal');
+$form->get('submit')->setValue('Save Changes');
+$form->prepare();
+?>
+<div class="d-flex justify-content-between align-items-center">
+    <h1><?= $this->escapeHtml($title) ?></h1>
+    <a href="<?= $this->url('accounts') ?>" class="btn btn-outline-secondary">&larr; Back to Accounts</a>
+</div>
+
+<?= $this->form()->openTag($form) ?>
+
+<div class="form-group">
+    <?= $this->formLabel($form->get('name')->setAttribute('class', 'form-control')) ?>
+    <?= $this->formElement($form->get('name')) ?>
+    <?= $this->formElementErrors($form->get('name'), ['class' => 'help-block']) ?>
+</div>
+
+<div class="form-group">
+    <?= $this->formLabel($form->get('account_type')->setAttribute('class', 'form-control')) ?>
+    <?= $this->formElement($form->get('account_type')) ?>
+    <?= $this->formElementErrors($form->get('account_type'), ['class' => 'help-block']) ?>
+</div>
+
+<?= $this->formSubmit($form->get('submit')->setAttribute('class', 'btn btn-primary')) ?>
+<?= $this->formHidden($form->get('account_id')) ?>
+<?= $this->form()->closeTag() ?>

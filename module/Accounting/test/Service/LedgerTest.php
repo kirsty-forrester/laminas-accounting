@@ -60,6 +60,11 @@ final class LedgerTest extends TestCase
                 return $this->entries;
             }
 
+            public function posted(): array
+            {
+                return $this->entries;
+            }
+
             public function save(JournalEntry $journalEntry): JournalEntry
             {
                 return $journalEntry;

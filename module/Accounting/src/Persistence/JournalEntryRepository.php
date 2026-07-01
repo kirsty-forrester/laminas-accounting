@@ -44,6 +44,25 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         return $entries;
     }
 
+    /**
+     * Return posted journal entries
+     * 
+     * @return JournalEntry[]
+     */
+    public function posted(): array
+    {
+        $sql = new Sql($this->db);
+        $select = $sql->select('journal_entry')->where(['status' => JournalEntryStatus::Posted->value]);
+        $results = $sql->prepareStatementForSqlObject($select)->execute();
+
+        $entries = [];
+        foreach ($results as $row) {
+            $entries[] = $this->hydrate($row);
+        }
+
+        return $entries;
+    }
+
     public function save(JournalEntry $journalEntry): JournalEntry
     {
         $sql = new Sql($this->db);
@@ -114,7 +133,9 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
     private function linesFor(int $journalEntryId): array
     {
         $sql = new Sql($this->db);
-        $select = $sql->select('journal_entry_line')->where(['journal_entry_id' => $journalEntryId]);
+        $select = $sql
+            ->select('journal_entry_line')
+            ->where(['journal_entry_id' => $journalEntryId]);
         $results = $sql->prepareStatementForSqlObject($select)->execute();
 
         $lines = [];

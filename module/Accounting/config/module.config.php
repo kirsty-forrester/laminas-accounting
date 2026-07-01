@@ -66,6 +66,8 @@ return [
             => Persistence\AccountRepository::class,
             Model\JournalEntryRepositoryInterface::class
             => Persistence\JournalEntryRepository::class,
+            Model\AccountCommandInterface::class
+            => Persistence\AccountCommand::class,
         ],
         'factories' => [
             Service\Ledger::class
@@ -74,6 +76,8 @@ return [
             => Persistence\AccountRepositoryFactory::class,
             Persistence\JournalEntryRepository::class
             => Persistence\JournalEntryRepositoryFactory::class,
+            Persistence\AccountCommand::class
+            => ReflectionBasedAbstractFactory::class,
         ],
     ],
 

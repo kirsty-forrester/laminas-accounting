@@ -78,6 +78,7 @@ class JournalController extends AbstractActionController
         return $this->redirect()->toRoute('journal');
     }
 
+    // TODO: Move into a hydrator strategy
     /** @param array $rows the posted $data['lines'] */
     private function mapLines(array $rows): array
     {

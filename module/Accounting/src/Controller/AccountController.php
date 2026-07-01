@@ -2,17 +2,22 @@
 
 namespace Accounting\Controller;
 
+use Accounting\Model\AccountCommandInterface;
 use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Form\AccountForm;
 use Accounting\Model\Account;
 use Accounting\Service\Ledger;
 use Accounting\ValueObject\AccountType;
 use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
+use InvalidArgumentException;
 
 class AccountController extends AbstractActionController
 {
     public function __construct(
+        private AccountCommandInterface $accountCommand,
         private AccountRepositoryInterface $accountRepo,
+        private AccountForm $form,
         private Ledger $ledger,
     ) {}
 
@@ -26,9 +31,9 @@ class AccountController extends AbstractActionController
 
     public function viewAction()
     {
-        $id = (int) $this->params()->fromRoute('id', 0);
+        $id = (int) $this->params()->fromRoute('id');
 
-        if (0 === $id) {
+        if (! $id) {
             return $this->redirect()->toRoute('accounts');
         }
 
@@ -40,43 +45,76 @@ class AccountController extends AbstractActionController
 
     public function addAction()
     {
-        $form = new AccountForm();
-        $form->get('submit')->setValue('Add');
+        $this->form->get('submit')->setValue('Add');
 
         $request = $this->getRequest();
 
         if (! $request->isPost()) {
-            return ['form' => $form];
+            return ['form' => $this->form];
         }
 
-        $form->setData($request->getPost());
+        $this->form->setData($request->getPost());
 
-        if (! $form->isValid()) {
-            return ['form' => $form];
+        if (! $this->form->isValid()) {
+            return ['form' => $this->form];
         }
 
-        $data = $form->getData();
+        $data = $this->form->getData();
         $account = new Account(
             null,
             $data['name'],
             AccountType::from($data['account_type']),
         );
-        $this->accountRepo->save($account);
+        $this->accountCommand->insertAccount($account);
 
         return $this->redirect()->toRoute('account');
     }
 
     public function editAction()
     {
-        $id = (int) $this->params()->fromRoute('id', 0);
+        $id = (int) $this->params()->fromRoute('id');
 
-        if (0 === $id) {
+        if (! $id) {
             return $this->redirect()->toRoute('accounts', ['action' => 'add']);
         }
 
-        return [
-            'account' => $this->accountRepo->find($id),
-        ];
+        try {
+            $account = $this->accountRepo->find($id);
+        } catch (InvalidArgumentException $ex) {
+            return $this->redirect()->toRoute('account');
+        }
+
+        $this->form->setData([
+            'account_id'   => $account->getAccountId(),
+            'name'         => $account->getName(),
+            'account_type' => $account->getType()->value,
+        ]);
+        $viewModel = new ViewModel(['form' => $this->form]);
+
+        $request = $this->getRequest();
+        if (! $request->isPost()) {
+            return $viewModel;
+        }
+
+        $this->form->setData($request->getPost());
+
+        if (! $this->form->isValid()) {
+            return $viewModel;
+        }
+
+        $data = $this->form->getData();
+        $account = new Account(
+            $id,
+            $data['name'],
+            AccountType::from($data['account_type']),
+        );
+        $account = $this->accountCommand->updateAccount($account);
+        
+        // TODO: Try child routes as shown in docs
+        return $this->redirect()->toRoute(
+            'account',
+            ['action' => 'view', 'id' => $account->getAccountId()]
+        );
     }
 
     public function deleteAction()

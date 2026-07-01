@@ -10,7 +10,7 @@ interface AccountCommandInterface
      * @param Account $account The account to insert; may or may not have an identifier.
      * @return Account The inserted account, with identifier.
      */
-    public function insertAccount(Account $account);
+    public function insertAccount(Account $account): Account;
 
     /**
      * Update an existing account in the system.
@@ -18,7 +18,7 @@ interface AccountCommandInterface
      * @param Account $account The account to update; must have an identifier.
      * @return Account The updated account.
      */
-    public function updateAccount(Account $account);
+    public function updateAccount(Account $account) : Account;
 
     /**
      * Delete an account from the system.

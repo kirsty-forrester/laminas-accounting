@@ -44,32 +44,6 @@ class AccountRepository implements AccountRepositoryInterface
         return $accounts;
     }
 
-    public function save(Account $account): Account
-    {
-        $sql = new Sql($this->db);
-        $data = [
-            'name' => $account->getName(),
-            'type' => $account->getType()->value,
-        ];
-
-        if ($account->getAccountId()) {
-            $update = $sql->update('account')->set($data)->where(['account_id' => $account->getAccountId()]);
-            $sql->prepareStatementForSqlObject($update)->execute();
-
-            return $account;
-        }
-
-        $insert = $sql->insert('account')->values($data);
-        $result = $sql->prepareStatementForSqlObject($insert)->execute();
-
-        // Entity is immutable (no setters); return a new instance carrying the generated id.
-        return new Account(
-            (int) $result->getGeneratedValue(),
-            $account->getName(),
-            $account->getType(),
-        );
-    }
-
     private function hydrate(array $row): Account
     {
         return new Account(
