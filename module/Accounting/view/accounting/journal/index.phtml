@@ -1,8 +1,6 @@
 <?php
 
-use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\JournalEntryStatus;
-use Accounting\ValueObject\Money;
 
 $title = 'Journal Entries';
 $this->headTitle($title);
@@ -16,20 +14,9 @@ $statusColours = [
     JournalEntryStatus::Voided->value    => 'dark',
 ];
 
-// An entry's value is its total debits (which equal its credits when balanced).
-$entryTotal = function ($entry): Money {
-    $total = Money::zero();
-    foreach ($entry->getLines() as $line) {
-        if ($line->getDirection() === Direction::Debit) {
-            $total = $total->add($line->getAmount());
-        }
-    }
-    return $total;
-};
+// all() returns an array of JournalEntry aggregates (each with its lines loaded).
+$entries = $journal_entries;
 
-// all() yields a forward-only result set; buffer it so we can test for
-// emptiness before iterating the table body.
-$entries = iterator_to_array($journal_entries, false);
 ?>
 <h1><?= $this->escapeHtml($title) ?></h1>
 
@@ -56,6 +43,7 @@ $entries = iterator_to_array($journal_entries, false);
         </thead>
         <tbody>
         <?php foreach ($entries as $entry) : ?>
+        
             <?php $status = $entry->getStatus(); ?>
             <tr>
                 <td><?= $this->escapeHtml((string) $entry->getJournalEntryId()) ?></td>
@@ -69,7 +57,9 @@ $entries = iterator_to_array($journal_entries, false);
                         <span class="badge bg-danger">Unbalanced</span>
                     <?php endif; ?>
                 </td>
-                <td class="text-end"><?= $this->escapeHtml($entryTotal($entry)->format()) ?></td>
+                <td class="text-end">
+                    <?= $this->escapeHtml($entry->total()->format()) ?>
+                </td>
                 <td class="text-end">
                     <a href="<?= $this->url('journal', ['action' => 'view', 'id' => $entry->getJournalEntryId()]) ?>"
                        class="btn btn-sm btn-outline-secondary">View</a>

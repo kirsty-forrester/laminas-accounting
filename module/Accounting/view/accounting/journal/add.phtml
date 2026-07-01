@@ -2,112 +2,100 @@
 
 $title = 'New Journal Entry';
 $this->headTitle($title);
+
+$form->setAttribute('action', $this->url('journal', ['action' => 'add']));
+$form->prepare();
+
+$lines = $form->get('lines');
+
+// Render one line as a table row. Used for both the real rows and the
+// collection's __index__ template row, so their markup stays identical.
+$renderRow = function ($line) {
+    ob_start();
+    ?>
+    <tr class="entry-row">
+        <td>
+            <?= $this->formHidden($line->get('journal_entry_line_id')) ?>
+            <?= $this->formElement($line->get('account_id')->setAttribute('class', 'form-control')) ?>
+        </td>
+        <td><?= $this->formElement($line->get('debit')) ?></td>
+        <td><?= $this->formElement($line->get('credit')) ?></td>
+        <td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>
+    </tr>
+    <?php
+    return ob_get_clean();
+};
 ?>
 <h1><?= $this->escapeHtml($title) ?></h1>
 
-<form method="post" action="<?= $this->url('journal', ['action' => 'add']) ?>" id="journal-form">
-    <div class="form-group mb-3">
-        <label for="date">Date</label>
-        <input type="date" class="form-control" id="date" name="date"
-               value="<?= date('Y-m-d') ?>" required>
-    </div>
+<?= $this->form()->openTag($form) ?>
 
-    <div class="form-group mb-3">
-        <label for="description">Description</label>
-        <input type="text" class="form-control" id="description" name="description"
-               placeholder="e.g. Office supplies purchased on credit" required>
-    </div>
+<div class="form-group mb-3">
+    <?= $this->formLabel($form->get('date')) ?>
+    <?= $this->formElement($form->get('date')->setAttribute('class', 'form-control')) ?>
+    <?= $this->formElementErrors($form->get('date'), ['class' => 'text-danger']) ?>
+</div>
 
-    <table class="table" id="entries-table">
-        <thead>
-            <tr>
-                <th>Account</th>
-                <th>Debit</th>
-                <th>Credit</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="entries-body">
-            <tr class="entry-row">
-                <td>
-                    <select class="form-control" name="entries[0][account_id]" required>
-                        <option value="">-- Select Account --</option>
-                        <?php foreach ($accounts as $account) : ?>
-                            <option value="<?= $account->getAccountId() ?>">
-                                <?= $this->escapeHtml($account->getName()) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td><input type="text" class="form-control debit-input" name="entries[0][debit]" placeholder="0.00"></td>
-                <td><input type="text" class="form-control credit-input" name="entries[0][credit]" placeholder="0.00"></td>
-                <td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>
-            </tr>
-            <tr class="entry-row">
-                <td>
-                    <select class="form-control" name="entries[1][account_id]" required>
-                        <option value="">-- Select Account --</option>
-                        <?php foreach ($accounts as $account) : ?>
-                            <option value="<?= $account->getAccountId() ?>">
-                                <?= $this->escapeHtml($account->getName()) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </td>
-                <td><input type="text" class="form-control debit-input" name="entries[1][debit]" placeholder="0.00"></td>
-                <td><input type="text" class="form-control credit-input" name="entries[1][credit]" placeholder="0.00"></td>
-                <td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr>
-                <th>Totals</th>
-                <th id="total-debits">0.00</th>
-                <th id="total-credits">0.00</th>
-                <th></th>
-            </tr>
-        </tfoot>
-    </table>
+<div class="form-group mb-3">
+    <?= $this->formLabel($form->get('description')) ?>
+    <?= $this->formElement($form->get('description')->setAttribute('class', 'form-control')) ?>
+    <?= $this->formElementErrors($form->get('description'), ['class' => 'text-danger']) ?>
+</div>
 
-    <div class="mb-3">
-        <button type="button" class="btn btn-secondary" id="add-row">+ Add Line</button>
-    </div>
+<table class="table" id="entries-table">
+    <thead>
+        <tr>
+            <th>Account</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="entries-body">
+        <?php foreach ($lines as $line) : ?>
+            <?= $renderRow($line) ?>
+        <?php endforeach; ?>
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>Totals</th>
+            <th id="total-debits">0.00</th>
+            <th id="total-credits">0.00</th>
+            <th></th>
+        </tr>
+    </tfoot>
+</table>
 
-    <p id="balance-warning" class="text-danger" style="display:none;">
-        Debits and credits must be equal.
-    </p>
+<div class="mb-3">
+    <button type="button" class="btn btn-secondary" id="add-row">+ Add Line</button>
+</div>
 
-    <button type="submit" class="btn btn-primary" id="post-btn" disabled>Post</button>
-</form>
+<p id="balance-warning" class="text-danger" style="display:none;">
+    Debits and credits must be equal.
+</p>
+
+<?= $this->formHidden($form->get('journal_entry_id')) ?>
+<?= $this->formSubmit($form->get('submit')
+        ->setAttribute('class', 'btn btn-primary')
+        ->setAttribute('id', 'post-btn')) ?>
+
+<?= $this->form()->closeTag() ?>
 
 <?php
-// Build the account options HTML once for JavaScript to reuse
-$optionsHtml = '<option value="">-- Select Account --</option>';
-foreach ($accounts as $account) {
-    $optionsHtml .= sprintf(
-        '<option value="%d">%s</option>',
-        $account->getAccountId(),
-        $this->escapeHtml($account->getName()),
-    );
-}
+// The collection emits a __index__ template row; the JS clones it for new lines,
+// substituting the running index into the field names (lines[2][debit], ...).
+$templateRow = $renderRow($lines->getTemplateElement());
 ?>
-
 <script>
 (function () {
-    var accountOptions = <?= json_encode($optionsHtml) ?>;
-    var tbody = document.getElementById('entries-body');
-    var rowIndex = 2;
+    var template = <?= json_encode($templateRow) ?>;
+    var tbody    = document.getElementById('entries-body');
+    var rowIndex = <?= count($lines) ?>;
 
     document.getElementById('add-row').addEventListener('click', function () {
-        var tr = document.createElement('tr');
-        tr.className = 'entry-row';
-        tr.innerHTML =
-            '<td><select class="form-control" name="entries[' + rowIndex + '][account_id]" required>'
-                + accountOptions + '</select></td>'
-            + '<td><input type="text" class="form-control debit-input" name="entries[' + rowIndex + '][debit]" placeholder="0.00"></td>'
-            + '<td><input type="text" class="form-control credit-input" name="entries[' + rowIndex + '][credit]" placeholder="0.00"></td>'
-            + '<td><button type="button" class="btn btn-sm btn-danger remove-row">-</button></td>';
-        tbody.appendChild(tr);
+        var holder = document.createElement('tbody');
+        holder.innerHTML = template.replace(/__index__/g, rowIndex);
+        tbody.appendChild(holder.firstElementChild);
         rowIndex++;
         updateTotals();
     });
@@ -131,20 +119,13 @@ foreach ($accounts as $account) {
 
     function parsePennies(value) {
         var f = parseFloat(value);
-        if (isNaN(f)) return 0;
-        return Math.round(f * 100);
+        return isNaN(f) ? 0 : Math.round(f * 100);
     }
 
     function updateTotals() {
-        var debits = 0;
-        var credits = 0;
-
-        document.querySelectorAll('.debit-input').forEach(function (input) {
-            debits += parsePennies(input.value);
-        });
-        document.querySelectorAll('.credit-input').forEach(function (input) {
-            credits += parsePennies(input.value);
-        });
+        var debits = 0, credits = 0;
+        document.querySelectorAll('.debit-input').forEach(function (i) { debits += parsePennies(i.value); });
+        document.querySelectorAll('.credit-input').forEach(function (i) { credits += parsePennies(i.value); });
 
         document.getElementById('total-debits').textContent = (debits / 100).toFixed(2);
         document.getElementById('total-credits').textContent = (credits / 100).toFixed(2);
@@ -154,5 +135,7 @@ foreach ($accounts as $account) {
         document.getElementById('balance-warning').style.display =
             (debits > 0 || credits > 0) && !balanced ? '' : 'none';
     }
+
+    updateTotals();
 })();
 </script>

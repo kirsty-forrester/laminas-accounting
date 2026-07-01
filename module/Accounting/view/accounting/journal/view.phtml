@@ -1,0 +1,84 @@
+<?php
+
+use Accounting\ValueObject\Direction;
+use Accounting\ValueObject\JournalEntryStatus;
+use Accounting\ValueObject\Money;
+
+/** @var Accounting\Model\JournalEntry $entry */
+$entry  = $journal_entry;
+$id     = $entry->getJournalEntryId();
+$status = $entry->getStatus();
+
+$title = sprintf('Journal Entry #%d', $id);
+$this->headTitle($title);
+
+// Bootstrap contextual colour for each lifecycle status (matches the index view).
+$statusColours = [
+    JournalEntryStatus::Draft->value     => 'secondary',
+    JournalEntryStatus::Submitted->value => 'info',
+    JournalEntryStatus::Approved->value  => 'primary',
+    JournalEntryStatus::Posted->value    => 'success',
+    JournalEntryStatus::Voided->value    => 'dark',
+];
+
+// Running column totals, footed at the bottom of the table.
+$debitTotal  = Money::zero();
+$creditTotal = Money::zero();
+?>
+<div class="d-flex justify-content-between align-items-center">
+    <h1><?= $this->escapeHtml($title) ?></h1>
+    <a href="<?= $this->url('journal') ?>" class="btn btn-outline-secondary">&larr; Back to Journal</a>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-2">Date</dt>
+    <dd class="col-sm-10"><?= $this->escapeHtml($entry->getDate()->format('Y-m-d')) ?></dd>
+
+    <dt class="col-sm-2">Description</dt>
+    <dd class="col-sm-10"><?= $this->escapeHtml($entry->getDescription()) ?></dd>
+
+    <dt class="col-sm-2">Status</dt>
+    <dd class="col-sm-10">
+        <span class="badge bg-<?= $this->escapeHtmlAttr($statusColours[$status->value] ?? 'secondary') ?>">
+            <?= $this->escapeHtml(ucfirst($status->value)) ?>
+        </span>
+        <?php if (! $entry->isBalanced()) : ?>
+            <span class="badge bg-danger">Unbalanced</span>
+        <?php endif; ?>
+    </dd>
+</dl>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Account</th>
+            <th class="text-end">Debit</th>
+            <th class="text-end">Credit</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($entry->getLines() as $line) : ?>
+        <?php
+        $isDebit = $line->getDirection() === Direction::Debit;
+        if ($isDebit) {
+            $debitTotal = $debitTotal->add($line->getAmount());
+        } else {
+            $creditTotal = $creditTotal->add($line->getAmount());
+        }
+        $accountName = $account_names[$line->getAccountId()] ?? ('#' . $line->getAccountId());
+        ?>
+        <tr>
+            <td><?= $this->escapeHtml($accountName) ?></td>
+            <td class="text-end"><?= $isDebit ? $this->escapeHtml($line->getAmount()->format()) : '' ?></td>
+            <td class="text-end"><?= $isDebit ? '' : $this->escapeHtml($line->getAmount()->format()) ?></td>
+        </tr>
+    <?php endforeach; ?>
+    </tbody>
+    <tfoot>
+        <tr class="fw-bold border-top">
+            <th>Totals</th>
+            <td class="text-end"><?= $this->escapeHtml($debitTotal->format()) ?></td>
+            <td class="text-end"><?= $this->escapeHtml($creditTotal->format()) ?></td>
+        </tr>
+    </tfoot>
+</table>

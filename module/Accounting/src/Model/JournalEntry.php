@@ -5,6 +5,7 @@ namespace Accounting\Model;
 use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\Money;
 use Accounting\ValueObject\JournalEntryStatus;
+use Accounting\Exceptions\IllegalTransitionException;
 use Accounting\Exceptions\UnbalancedJournalEntryException;
 use DateTimeImmutable;
 
@@ -58,6 +59,11 @@ class JournalEntry
     public function isBalanced(): bool
     {
         return $this->totalFor(Direction::Debit)->equals($this->totalFor(Direction::Credit));
+    }
+
+    public function total(): Money
+    {
+        return $this->totalFor(Direction::Debit);
     }
 
     private function withStatus(JournalEntryStatus $status): self

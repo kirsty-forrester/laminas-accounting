@@ -29,10 +29,20 @@ return [
                     ],
                 ],
             ],
+            'journals' => [
+                'type' => Literal::class,
+                'options' => [
+                    'route' => '/journal',
+                    'defaults' => [
+                        'controller' => Controller\JournalController::class,
+                        'action' => 'index',
+                    ],
+                ],
+            ],
             'journal' => [
                 'type' => Segment::class,
                 'options' => [
-                    'route' => '/journal[/:action[/:id]]',
+                    'route' => '/journal/[:action[/:id]]',
                     'constraints' => ['id' => '[0-9]+'],
                     'defaults' => [
                         'controller' => Controller\JournalController::class,

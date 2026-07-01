@@ -4,68 +4,48 @@ namespace Accounting\Persistence;
 
 use Accounting\Model\Account;
 use Accounting\Model\AccountRepositoryInterface;
+use Accounting\ValueObject\AccountType;
 use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Db\Sql\Sql;
-use Laminas\Db\Adapter\Driver\ResultInterface;
-use Laminas\Hydrator\HydratorInterface;
-use Laminas\Db\ResultSet\HydratingResultSet;
 use InvalidArgumentException;
-use RuntimeException;
 
 class AccountRepository implements AccountRepositoryInterface
 {
-    public function __construct(
-        private AdapterInterface $db,
-        private HydratorInterface $hydrator,
-        private Account $accountPrototype,
-    ) {}
+    public function __construct(private AdapterInterface $db) {}
 
     public function find(int $id): Account
     {
-        $sql       = new Sql($this->db);
-        $select    = $sql->select('account');
-        $select->where(['account_id = ?' => $id]);
+        $sql = new Sql($this->db);
+        $select = $sql->select('account')->where(['account_id' => $id]);
+        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
 
-        $statement = $sql->prepareStatementForSqlObject($select);
-        $result    = $statement->execute();
-
-        if (! $result instanceof ResultInterface || ! $result->isQueryResult()) {
-            throw new RuntimeException(sprintf(
-                'Failed retrieving account with identifier "%s"; unknown database error.',
-                $id
-            ));
-        }
-
-        $resultSet = new HydratingResultSet($this->hydrator, $this->accountPrototype);
-        $resultSet->initialize($result);
-        $account = $resultSet->current();
-
-        if (! $account) {
+        if (! $row) {
             throw new InvalidArgumentException(sprintf(
                 'Account with identifier "%s" not found.',
                 $id
             ));
         }
 
-        return $account;
+        return $this->hydrate($row);
     }
 
-    public function all(): HydratingResultSet
+    /** @return Account[] */
+    public function all(): array
     {
-        $resultSet = new HydratingResultSet($this->hydrator, $this->accountPrototype);
-
-        $sql    = new Sql($this->db);
+        $sql = new Sql($this->db);
         $select = $sql->select('account');
-        $result = $sql->prepareStatementForSqlObject($select)->execute();
+        $results = $sql->prepareStatementForSqlObject($select)->execute();
 
-        if ($result instanceof ResultInterface && $result->isQueryResult()) {
-            $resultSet->initialize($result);
+        $accounts = [];
+        foreach ($results as $row) {
+            $accounts[] = $this->hydrate($row);
         }
 
-        return $resultSet;
+        return $accounts;
     }
 
-    public function save(Account $account): Account {
+    public function save(Account $account): Account
+    {
         $sql = new Sql($this->db);
         $data = [
             'name' => $account->getName(),
@@ -87,6 +67,15 @@ class AccountRepository implements AccountRepositoryInterface
             (int) $result->getGeneratedValue(),
             $account->getName(),
             $account->getType(),
+        );
+    }
+
+    private function hydrate(array $row): Account
+    {
+        return new Account(
+            (int) $row['account_id'],
+            $row['name'],
+            AccountType::from($row['type']),
         );
     }
 }

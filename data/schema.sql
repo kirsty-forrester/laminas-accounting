@@ -7,7 +7,9 @@ CREATE TABLE account (
 CREATE TABLE journal_entry (
      journal_entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
      date             TEXT    NOT NULL,  -- ISO 8601 (YYYY-MM-DD)
-     description      TEXT    NOT NULL
+     description      TEXT    NOT NULL,
+     status           TEXT    NOT NULL DEFAULT 'draft'
+         CHECK (status IN ('draft', 'submitted', 'approved', 'posted', 'voided'))
 );
 
 CREATE TABLE journal_entry_line (

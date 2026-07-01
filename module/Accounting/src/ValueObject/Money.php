@@ -9,8 +9,8 @@ final class Money
     public static function fromDecimal(string $pounds): self
     {
         // "500.00" → 50000
-        $pennies = (int) bcmul($pounds, '100', 0);
-
+        $pennies = (int) round(((float) $pounds) * 100);
+        
         return new self($pennies);
     }
 

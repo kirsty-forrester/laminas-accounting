@@ -7,19 +7,14 @@ use Accounting\Model\JournalEntryLine;
 use Accounting\Model\JournalEntryRepositoryInterface;
 use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\Money;
+use Accounting\ValueObject\JournalEntryStatus;
 use DateTimeImmutable;
 use Laminas\Db\Adapter\AdapterInterface;
-use Laminas\Hydrator\HydratorInterface;
-use Laminas\Db\ResultSet\HydratingResultSet;
 use Laminas\Db\Sql\Sql;
 
 class JournalEntryRepository implements JournalEntryRepositoryInterface
 {
-    public function __construct(
-        private AdapterInterface $db,
-        private HydratorInterface $hydrator,
-        private JournalEntry $journalEntryPrototype,
-    ) {}
+    public function __construct(private AdapterInterface $db) {}
 
     public function find(int $id): ?JournalEntry
     {
@@ -27,34 +22,35 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         $select = $sql->select('journal_entry')->where(['journal_entry_id' => $id]);
         $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
 
-        if (!$row) {
+        if (! $row) {
             return null;
         }
 
         return $this->hydrate($row);
     }
 
-    public function all(): HydratingResultSet
+    /** @return JournalEntry[] */
+    public function all(): array
     {
-        $resultSet = new HydratingResultSet($this->hydrator, $this->journalEntryPrototype);
-
-        $sql    = new Sql($this->db);
+        $sql = new Sql($this->db);
         $select = $sql->select('journal_entry');
-        $result = $sql->prepareStatementForSqlObject($select)->execute();
+        $results = $sql->prepareStatementForSqlObject($select)->execute();
 
-        if ($result instanceof ResultInterface && $result->isQueryResult()) {
-            $resultSet->initialize($result);
+        $entries = [];
+        foreach ($results as $row) {
+            $entries[] = $this->hydrate($row);
         }
 
-        return $resultSet;
+        return $entries;
     }
 
     public function save(JournalEntry $journalEntry): JournalEntry
     {
         $sql = new Sql($this->db);
         $data = [
-            'date' => $journalEntry->getDate()->format('Y-m-d'),
+            'date'        => $journalEntry->getDate()->format('Y-m-d'),
             'description' => $journalEntry->getDescription(),
+            'status'      => $journalEntry->getStatus()->value,
         ];
 
         if ($journalEntry->getJournalEntryId()) {
@@ -70,6 +66,7 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
             $journalEntry = new JournalEntry(
                 (int) $result->getGeneratedValue(),
                 $journalEntry->getDate(),
+                $journalEntry->getStatus(),
                 $journalEntry->getDescription(),
                 $journalEntry->getLines(),
             );
@@ -92,9 +89,9 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         foreach ($journalEntry->getLines() as $line) {
             $insert = $sql->insert('journal_entry_line')->values([
                 'journal_entry_id' => $journalEntryId,
-                'account_id' => $line->getAccountId(),
-                'direction' => $line->getDirection()->value,
-                'amount' => $line->getAmount()->pennies,
+                'account_id'       => $line->getAccountId(),
+                'direction'        => $line->getDirection()->value,
+                'amount'           => $line->getAmount()->pennies,
             ]);
             $sql->prepareStatementForSqlObject($insert)->execute();
         }
@@ -107,6 +104,7 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         return new JournalEntry(
             $journalEntryId,
             new DateTimeImmutable($row['date']),
+            JournalEntryStatus::from($row['status']),
             $row['description'],
             $this->linesFor($journalEntryId),
         );
@@ -120,7 +118,6 @@ class JournalEntryRepository implements JournalEntryRepositoryInterface
         $results = $sql->prepareStatementForSqlObject($select)->execute();
 
         $lines = [];
-
         foreach ($results as $row) {
             $lines[] = new JournalEntryLine(
                 (int) $row['journal_entry_line_id'],
