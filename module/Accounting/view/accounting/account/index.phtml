@@ -1,32 +1,63 @@
 <?php
 
+use Accounting\ValueObject\AccountType;
+
 $title = 'Chart of Accounts';
 $this->headTitle($title);
+
+// Group accounts by their type value.
+$byType = [];
+foreach ($this->accounts as $account) {
+    $byType[$account->getType()->value][] = $account;
+}
+
+// Standard accounting display order.
+$order = [
+    AccountType::Asset,
+    AccountType::Liability,
+    AccountType::Equity,
+    AccountType::Income,
+    AccountType::Expense,
+];
 ?>
-    <h1><?= $this->escapeHtml($title) ?></h1>
+<h1><?= $this->escapeHtml($title) ?></h1>
 
 <p>
     <a href="<?= $this->url('account', ['action' => 'add']) ?>" class="btn btn-primary">Add New Account</a>
 </p>
 
-<table class="table">
-    <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>&nbsp;</th>
-    </tr>
-    <?php foreach ($this->accounts as $account) : ?>
-        <tr>
-            <td><?= $this->escapeHtml($account->getName()) ?></td>
-            <td>
-                <?php if (! is_null($account->getType())): ?>
-                    <?= $this->escapeHtml(ucfirst($account->getType()->value)) ?>
-                <?php endif; ?>
-            </td>
-            <td>
-                <a href="<?= $this->url('account', ['action' => 'edit', 'id' => $account->getAccountId()]) ?>">Edit</a>
-                <a href="<?= $this->url('account', ['action' => 'delete', 'id' => $account->getAccountId()]) ?>">Delete</a>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-</table>
+<?php foreach ($order as $type) : ?>
+    <?php $group = $byType[$type->value] ?? []; ?>
+    <?php if (! $group) { continue; } ?>
+
+    <section class="account-group" style="--accent: <?= $this->escapeHtmlAttr($type->colour()) ?>;">
+        <h2 class="account-group-title"><?= $this->escapeHtml($type->heading()) ?></h2>
+
+        <table class="table table-striped align-middle account-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th class="text-end">Balance</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($group as $account) : ?>
+                <?php $balance = $balances[$account->getAccountId()] ?? null; ?>
+                <tr>
+                    <td><?= $this->escapeHtml($account->getName()) ?></td>
+                    <td class="text-end"><?= $balance ? $this->escapeHtml($balance->format()) : '' ?></td>
+                    <td class="text-end">
+                        <a href="<?= $this->url('account', ['action' => 'view', 'id' => $account->getAccountId()]) ?>"
+                           class="btn btn-sm btn-outline-secondary">View</a>
+                        <a href="<?= $this->url('account', ['action' => 'edit', 'id' => $account->getAccountId()]) ?>"
+                           class="btn btn-sm btn-primary">Edit</a>
+                        <a href="<?= $this->url('account', ['action' => 'delete', 'id' => $account->getAccountId()]) ?>"
+                           class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </section>
+<?php endforeach; ?>

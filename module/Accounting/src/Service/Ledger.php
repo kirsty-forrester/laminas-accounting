@@ -35,4 +35,40 @@ final class Ledger
 
         return $balance;
     }
+
+    /**
+     * Balance for every account, computed in a single pass over the journal
+     * (cheaper than calling balanceFor() once per account).
+     *
+     * @return array<int, Money> keyed by account id
+     */
+    public function balances(): array
+    {
+        $normal   = [];
+        $balances = [];
+
+        foreach ($this->accounts->all() as $account) {
+            $id            = $account->getAccountId();
+            $normal[$id]   = $account->getType()->normalBalance();
+            $balances[$id] = Money::zero();
+        }
+
+        foreach ($this->journalEntries->all() as $journalEntry) {
+            foreach ($journalEntry->getLines() as $line) {
+                $id = $line->getAccountId();
+
+                if (! isset($balances[$id])) {
+                    continue; // line references an account we don't know about
+                }
+
+                if ($line->getDirection() === $normal[$id]) {
+                    $balances[$id] = $balances[$id]->add($line->getAmount());
+                } else {
+                    $balances[$id] = $balances[$id]->subtract($line->getAmount());
+                }
+            }
+        }
+
+        return $balances;
+    }
 }

@@ -122,6 +122,38 @@ final class LedgerTest extends TestCase
         $this->assertSame(0, $ledger->balanceFor(1)->pennies);
     }
 
+    public function testBalancesComputesEveryAccountInOnePass(): void
+    {
+        $accounts = $this->fakeAccounts([
+            1 => new Account(1, 'Cash at Bank', AccountType::Asset),   // debit-normal
+            5 => new Account(5, 'Sales Revenue', AccountType::Income), // credit-normal
+        ]);
+
+        $entries = $this->fakeJournalEntries([
+            // £80 sale: debit cash, credit revenue.
+            $this->entry([
+                $this->line(1, Direction::Debit, 8000),
+                $this->line(5, Direction::Credit, 8000),
+            ]),
+        ]);
+
+        $balances = (new Ledger($accounts, $entries))->balances();
+
+        $this->assertSame(8000, $balances[1]->pennies);
+        $this->assertSame(8000, $balances[5]->pennies);
+    }
+
+    public function testBalancesReturnsZeroForAccountsWithNoLines(): void
+    {
+        $accounts = $this->fakeAccounts([
+            9 => new Account(9, 'Petty Cash', AccountType::Asset),
+        ]);
+
+        $balances = (new Ledger($accounts, $this->fakeJournalEntries([])))->balances();
+
+        $this->assertSame(0, $balances[9]->pennies);
+    }
+
     public function testBalanceForCreditNormalAccountAddsCreditsAndSubtractsDebits(): void
     {
         // Account 5 is income (credit-normal): credits increase it.

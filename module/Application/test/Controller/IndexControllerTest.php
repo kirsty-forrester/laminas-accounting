@@ -28,17 +28,18 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
 
     public function testIndexActionCanBeAccessed(): void
     {
-        $this->dispatch('/', 'GET');
+        // '/' is now the chart of accounts; the skeleton index lives at /application.
+        $this->dispatch('/application', 'GET');
         $this->assertResponseStatusCode(200);
         $this->assertModuleName('application');
         $this->assertControllerName(IndexController::class); // as specified in router's controller name alias
         $this->assertControllerClass('IndexController');
-        $this->assertMatchedRouteName('home');
+        $this->assertMatchedRouteName('application');
     }
 
     public function testIndexActionViewModelTemplateRenderedWithinLayout(): void
     {
-        $this->dispatch('/', 'GET');
+        $this->dispatch('/application', 'GET');
         $this->assertQuery('body h1');
     }
 

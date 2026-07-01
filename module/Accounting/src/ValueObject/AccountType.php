@@ -22,4 +22,28 @@ enum AccountType: string
             self::Liability, self::Equity, self::Income => Direction::Credit,
         };
     }
+
+    /** Plural heading used when grouping accounts of this type. */
+    public function heading(): string
+    {
+        return match ($this) {
+            self::Asset     => 'Assets',
+            self::Liability => 'Liabilities',
+            self::Equity    => 'Equity',
+            self::Income    => 'Income',
+            self::Expense   => 'Expenses',
+        };
+    }
+
+    /** Accent colour (hex) used to theme this type's section in the UI. */
+    public function colour(): string
+    {
+        return match ($this) {
+            self::Asset     => '#1f9cea', // aqua
+            self::Liability => '#f5533d', // coral
+            self::Equity    => '#8e5bd8', // violet
+            self::Income    => '#4e9e1f', // green
+            self::Expense   => '#f0932b', // amber
+        };
+    }
 }

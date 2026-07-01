@@ -16,7 +16,8 @@ return [
                 'options' => [
                     'route'    => '/',
                     'defaults' => [
-                        'controller' => Controller\IndexController::class,
+                        // The chart of accounts is the app's landing page.
+                        'controller' => \Accounting\Controller\AccountController::class,
                         'action'     => 'index',
                     ],
                 ],

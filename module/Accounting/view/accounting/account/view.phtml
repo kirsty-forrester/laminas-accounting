@@ -1,1 +1,33 @@
-<h1>Account Ledger Detail</h1>
+<?php
+
+/** @var Accounting\Model\Account $account */
+/** @var Accounting\ValueObject\Money $balance */
+$type  = $account->getType();
+$title = $account->getName();
+$this->headTitle($title);
+?>
+<section class="account-group" style="--accent: <?= $this->escapeHtmlAttr($type->colour()) ?>;">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="account-group-title"><?= $this->escapeHtml($title) ?></h1>
+        <a href="<?= $this->url('accounts') ?>" class="btn btn-outline-secondary">&larr; Back to Accounts</a>
+    </div>
+
+    <dl class="row mt-3">
+        <dt class="col-sm-3">Type</dt>
+        <dd class="col-sm-9">
+            <span class="badge" style="background: <?= $this->escapeHtmlAttr($type->colour()) ?>;">
+                <?= $this->escapeHtml($type->heading()) ?>
+            </span>
+        </dd>
+
+        <dt class="col-sm-3">Current Balance</dt>
+        <dd class="col-sm-9 fs-4 fw-bold"><?= $this->escapeHtml($balance->format()) ?></dd>
+    </dl>
+
+    <p>
+        <a href="<?= $this->url('account', ['action' => 'edit', 'id' => $account->getAccountId()]) ?>"
+           class="btn btn-primary">Edit</a>
+        <a href="<?= $this->url('account', ['action' => 'delete', 'id' => $account->getAccountId()]) ?>"
+           class="btn btn-danger">Delete</a>
+    </p>
+</section>
