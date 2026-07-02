@@ -8,9 +8,9 @@ The chart of accounts (the landing page), grouped and colour-coordinated by acco
 
 <img src="docs/img/chart_screenshot.png" alt="Chart of accounts" width="700">
 
-A journal entry with its balanced debit/credit lines and lifecycle status:
+Creating a journal entry — pick accounts and enter debit/credit lines
 
-<img src="docs/img/journal_screenshot.png" alt="Journal entry" width="700">
+<img src="docs/img/journal_screenshot.png" alt="New journal entry form" width="700">
 
 ## Using docker-compose
 
