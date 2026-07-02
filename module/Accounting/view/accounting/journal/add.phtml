@@ -3,7 +3,7 @@
 $title = 'New Journal Entry';
 $this->headTitle($title);
 
-$form->setAttribute('action', $this->url('journal', ['action' => 'add']));
+$form->setAttribute('action', $this->url('journals/add'));
 $form->prepare();
 
 $lines = $form->get('lines');

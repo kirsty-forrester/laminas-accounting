@@ -21,13 +21,13 @@ $entries = $journal_entries;
 <h1><?= $this->escapeHtml($title) ?></h1>
 
 <p>
-    <a href="<?= $this->url('journal', ['action' => 'add']) ?>" class="btn btn-primary">New Journal Entry</a>
+    <a href="<?= $this->url('journals/add') ?>" class="btn btn-primary">New Journal Entry</a>
 </p>
 
 <?php if (count($entries) === 0) : ?>
     <div class="alert alert-info">
         No journal entries yet.
-        <a href="<?= $this->url('journal', ['action' => 'add']) ?>" class="alert-link">Create the first one</a>.
+        <a href="<?= $this->url('journals/add') ?>" class="alert-link">Create the first one</a>.
     </div>
 <?php else : ?>
     <table class="table table-striped align-middle">
@@ -61,7 +61,7 @@ $entries = $journal_entries;
                     <?= $this->escapeHtml($entry->total()->format()) ?>
                 </td>
                 <td class="text-end">
-                    <a href="<?= $this->url('journal', ['action' => 'view', 'id' => $entry->getJournalEntryId()]) ?>"
+                    <a href="<?= $this->url('journals/view', ['id' => $entry->getJournalEntryId()]) ?>"
                        class="btn btn-sm btn-outline-secondary">View</a>
                 </td>
             </tr>

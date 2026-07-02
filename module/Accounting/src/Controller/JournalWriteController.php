@@ -2,53 +2,23 @@
 
 namespace Accounting\Controller;
 
-use Accounting\ValueObject\Direction;
-use Accounting\ValueObject\Money;
-use Accounting\ValueObject\JournalEntryStatus;
-use Accounting\Model\JournalEntry;
-use Accounting\Model\JournalEntryLine;
 use Accounting\Form\JournalEntryForm;
 use Accounting\Model\AccountRepositoryInterface;
+use Accounting\Model\JournalEntry;
+use Accounting\Model\JournalEntryLine;
 use Accounting\Model\JournalEntryRepositoryInterface;
+use Accounting\ValueObject\Direction;
+use Accounting\ValueObject\JournalEntryStatus;
+use Accounting\ValueObject\Money;
 use Laminas\Mvc\Controller\AbstractActionController;
 use DateTimeImmutable;
 
-class JournalController extends AbstractActionController
+class JournalWriteController extends AbstractActionController
 {
-    public function __construct(private AccountRepositoryInterface $accountRepo, private JournalEntryRepositoryInterface $journalEntryRepo) {}
-
-    public function indexAction()
-    {
-        return [
-            'journal_entries' => $this->journalEntryRepo->all(),
-        ];
-    }
-
-    public function viewAction()
-    {
-        $id = (int) $this->params()->fromRoute('id', 0);
-
-        if (0 === $id) {
-            return $this->redirect()->toRoute('journal');
-        }
-
-        $journalEntry = $this->journalEntryRepo->find($id);
-
-        if ($journalEntry === null) {
-            return $this->redirect()->toRoute('journal');
-        }
-
-        // Lines store only account ids; map id => name so the view can label them.
-        $accountNames = [];
-        foreach ($this->accountRepo->all() as $account) {
-            $accountNames[$account->getAccountId()] = $account->getName();
-        }
-
-        return [
-            'journal_entry' => $journalEntry,
-            'account_names' => $accountNames,
-        ];
-    }
+    public function __construct(
+        private AccountRepositoryInterface $accountRepo,
+        private JournalEntryRepositoryInterface $journalEntryRepo,
+    ) {}
 
     public function addAction()
     {
@@ -75,7 +45,7 @@ class JournalController extends AbstractActionController
         );
         $this->journalEntryRepo->save($journalEntry);
 
-        return $this->redirect()->toRoute('journal');
+        return $this->redirect()->toRoute('journals');
     }
 
     // TODO: Move into a hydrator strategy

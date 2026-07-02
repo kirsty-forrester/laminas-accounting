@@ -57,19 +57,26 @@ return [
                 'options' => [
                     'route' => '/journal',
                     'defaults' => [
-                        'controller' => Controller\JournalController::class,
+                        'controller' => Controller\JournalListController::class,
                         'action' => 'index',
                     ],
                 ],
-            ],
-            'journal' => [
-                'type' => Segment::class,
-                'options' => [
-                    'route' => '/journal/[:action[/:id]]',
-                    'constraints' => ['id' => '[0-9]+'],
-                    'defaults' => [
-                        'controller' => Controller\JournalController::class,
-                        'action' => 'index',
+                'may_terminate' => true, // so /journal itself matches
+                'child_routes'  => [
+                    'view' => [
+                        'type'    => Segment::class,
+                        'options' => [
+                            'route'       => '/view/:id',
+                            'constraints' => ['id' => '[0-9]+'],
+                            'defaults'    => ['controller' => Controller\JournalListController::class, 'action' => 'view'],
+                        ],
+                    ],
+                    'add' => [
+                        'type'    => Literal::class,
+                        'options' => [
+                            'route'    => '/add',
+                            'defaults' => ['controller' => Controller\JournalWriteController::class, 'action' => 'add'],
+                        ],
                     ],
                 ],
             ],
@@ -81,7 +88,8 @@ return [
             Controller\AccountListController::class => ReflectionBasedAbstractFactory::class,
             Controller\AccountWriteController::class  => ReflectionBasedAbstractFactory::class,
             Controller\AccountDeleteController::class => ReflectionBasedAbstractFactory::class,
-            Controller\JournalController::class => ReflectionBasedAbstractFactory::class,
+            Controller\JournalListController::class => ReflectionBasedAbstractFactory::class,
+            Controller\JournalWriteController::class => ReflectionBasedAbstractFactory::class,
         ],
     ],
 
@@ -119,6 +127,9 @@ return [
             'accounting/account-write/add'     => __DIR__ . '/../view/accounting/account/add.phtml',
             'accounting/account-write/edit'    => __DIR__ . '/../view/accounting/account/edit.phtml',
             'accounting/account-delete/delete' => __DIR__ . '/../view/accounting/account/delete.phtml',
+            'accounting/journal-list/index'    => __DIR__ . '/../view/accounting/journal/index.phtml',
+            'accounting/journal-list/view'     => __DIR__ . '/../view/accounting/journal/view.phtml',
+            'accounting/journal-write/add'     => __DIR__ . '/../view/accounting/journal/add.phtml',
         ],
     ],
 ];
