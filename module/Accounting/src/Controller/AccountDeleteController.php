@@ -15,6 +15,7 @@ class AccountDeleteController extends AbstractActionController
         private AccountRepositoryInterface $repository
     ){}
 
+    // TODO: Stop or handle deletion when an account has journal entries
     public function deleteAction()
     {
         $id = $this->params()->fromRoute('id');
