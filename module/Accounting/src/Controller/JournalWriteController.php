@@ -2,11 +2,15 @@
 
 namespace Accounting\Controller;
 
+use Accounting\Exceptions\IllegalTransitionException;
+use Accounting\Exceptions\UnbalancedJournalEntryException;
 use Accounting\Form\JournalEntryForm;
 use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Model\JournalEntry;
 use Accounting\Model\JournalEntryLine;
+use Accounting\Model\JournalEntryCommandInterface;
 use Accounting\Model\JournalEntryRepositoryInterface;
+use Accounting\Service\JournalEntryLifecycle;
 use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\JournalEntryStatus;
 use Accounting\ValueObject\Money;
@@ -17,7 +21,9 @@ class JournalWriteController extends AbstractActionController
 {
     public function __construct(
         private AccountRepositoryInterface $accountRepo,
+        private JournalEntryCommandInterface $command,
         private JournalEntryRepositoryInterface $journalEntryRepo,
+        private JournalEntryLifecycle $lifecycle
     ) {}
 
     public function addAction()
@@ -43,9 +49,43 @@ class JournalWriteController extends AbstractActionController
             $data['description'],
             $this->mapLines($data['lines'])
         );
-        $this->journalEntryRepo->save($journalEntry);
+        $this->command->insertJournalEntry($journalEntry);
 
         return $this->redirect()->toRoute('journals');
+    }
+
+    /**
+     * Apply a lifecycle transition (submit/approve/post/void) to an entry.
+     */
+    public function transitionAction()
+    {
+        $request = $this->getRequest();
+        $id = (int) $this->params()->fromRoute('id');
+
+        if (! $id || ! $request->isPost()) {
+            return $this->redirect()->toRoute('journals');
+        }
+
+        $entry = $this->journalEntryRepo->find($id);
+        if ($entry === null) {
+            return $this->redirect()->toRoute('journals');
+        }
+
+        $to = (string) $request->getPost('to');
+
+        try {
+            match ($to) {
+                JournalEntryStatus::Submitted->value => $this->lifecycle->submitJournalEntry($entry),
+                JournalEntryStatus::Approved->value  => $this->lifecycle->approveJournalEntry($entry),
+                JournalEntryStatus::Posted->value    => $this->lifecycle->postJournalEntry($entry),
+                JournalEntryStatus::Voided->value    => $this->lifecycle->voidJournalEntry($entry),
+                default                              => null,
+            };
+        } catch (IllegalTransitionException | UnbalancedJournalEntryException $e) {
+            // TODO: surface via flash messenger
+        }
+
+        return $this->redirect()->toRoute('journals/view', ['id' => $id]);
     }
 
     // TODO: Move into a hydrator strategy

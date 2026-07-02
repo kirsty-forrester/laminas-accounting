@@ -1,6 +1,6 @@
 # laminas-accounting
 
-A small test project: a double-entry bookkeeping app based on the Laminas in-depth tutorial.
+A small test project: a double-entry bookkeeping app based on the Laminas in-depth tutorial. Deliberately over-engineered to practice conventions. Deliberately over-the-top UI design.
 
 ## Using docker-compose
 

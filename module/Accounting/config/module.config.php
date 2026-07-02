@@ -78,6 +78,14 @@ return [
                             'defaults' => ['controller' => Controller\JournalWriteController::class, 'action' => 'add'],
                         ],
                     ],
+                    'transition' => [
+                        'type'    => Segment::class,
+                        'options' => [
+                            'route'       => '/transition/:id',
+                            'constraints' => ['id' => '[0-9]+'],
+                            'defaults'    => ['controller' => Controller\JournalWriteController::class, 'action' => 'transition'],
+                        ],
+                    ],
                 ],
             ],
         ],
@@ -101,6 +109,8 @@ return [
             => Persistence\JournalEntryRepository::class,
             Model\AccountCommandInterface::class
             => Persistence\AccountCommand::class,
+            Model\JournalEntryCommandInterface::class
+            => Persistence\JournalEntryCommand::class,
         ],
         'factories' => [
             Service\Ledger::class
@@ -110,6 +120,8 @@ return [
             Persistence\JournalEntryRepository::class
             => Persistence\JournalEntryRepositoryFactory::class,
             Persistence\AccountCommand::class
+            => ReflectionBasedAbstractFactory::class,
+            Persistence\JournalEntryCommand::class
             => ReflectionBasedAbstractFactory::class,
         ],
     ],

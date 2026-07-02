@@ -82,3 +82,29 @@ $creditTotal = Money::zero();
         </tr>
     </tfoot>
 </table>
+
+<?php
+// Lifecycle actions: only the transitions that have a backing entity method
+// (allowedNext() also lists Draft, for which there is no transition yet).
+$transitions = [
+    JournalEntryStatus::Submitted->value => ['label' => 'Submit for Approval', 'class' => 'btn-info'],
+    JournalEntryStatus::Approved->value  => ['label' => 'Approve',             'class' => 'btn-primary'],
+    JournalEntryStatus::Posted->value    => ['label' => 'Post to Ledger',      'class' => 'btn-success'],
+    JournalEntryStatus::Voided->value    => ['label' => 'Void',                'class' => 'btn-danger'],
+];
+$available = array_filter(
+    $status->allowedNext(),
+    fn (JournalEntryStatus $next) => isset($transitions[$next->value])
+);
+?>
+<?php if ($available) : ?>
+    <div class="mt-4 d-flex gap-2">
+        <?php foreach ($available as $next) : ?>
+            <?php $t = $transitions[$next->value]; ?>
+            <form method="post" action="<?= $this->url('journals/transition', ['id' => $id]) ?>" class="d-inline">
+                <input type="hidden" name="to" value="<?= $this->escapeHtmlAttr($next->value) ?>">
+                <button type="submit" class="btn <?= $t['class'] ?>"><?= $this->escapeHtml($t['label']) ?></button>
+            </form>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>

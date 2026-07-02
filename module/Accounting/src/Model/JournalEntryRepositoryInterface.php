@@ -8,5 +8,4 @@ interface JournalEntryRepositoryInterface
     /** @return JournalEntry[] */
     public function all(): array;
     public function posted(): array;
-    public function save(JournalEntry $journalEntry): JournalEntry;
 }
