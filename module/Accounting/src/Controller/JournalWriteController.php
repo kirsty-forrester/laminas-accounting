@@ -17,6 +17,7 @@ use Laminas\Mvc\Controller\AbstractActionController;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+// TODO: This controller needs some work - too many responsibilities
 class JournalWriteController extends AbstractActionController
 {
     public function __construct(
