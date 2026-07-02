@@ -19,17 +19,15 @@ final class Ledger
         $account = $this->accounts->find($accountId);
         $balance = Money::zero();
 
+        $normalBalance = $account->getType()->normalBalance();
+
         foreach ($this->journalEntries->posted() as $journalEntry) {
             foreach ($journalEntry->getLines() as $line) {
                 if ($line->getAccountId() !== $accountId) {
                     continue;
                 }
 
-                if ($line->getDirection() === $account->getType()->normalBalance()) {
-                    $balance = $balance->add($line->getAmount());
-                } else {
-                    $balance = $balance->subtract($line->getAmount());
-                }
+                $balance = $balance->add($line->signedAgainst($normalBalance));
             }
         }
 
@@ -61,11 +59,7 @@ final class Ledger
                     continue; // line references an account we don't know about
                 }
 
-                if ($line->getDirection() === $normal[$id]) {
-                    $balances[$id] = $balances[$id]->add($line->getAmount());
-                } else {
-                    $balances[$id] = $balances[$id]->subtract($line->getAmount());
-                }
+                $balances[$id] = $balances[$id]->add($line->signedAgainst($normal[$id]));
             }
         }
 

@@ -42,6 +42,11 @@ final class Money
         return new self($this->pennies - $other->pennies);
     }
 
+    public function negate(): self
+    {
+        return new self(-$this->pennies);
+    }
+
     public function equals(Money $other): bool
     {
         return $this->pennies === $other->pennies;

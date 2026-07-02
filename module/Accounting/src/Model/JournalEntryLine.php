@@ -39,4 +39,16 @@ class JournalEntryLine
     {
         return $this->amount;
     }
+
+    /**
+     * The amount this line contributes to a balance whose positive side is
+     * $normalBalance: positive when the line sits on that side, negative when
+     * it sits on the opposite side.
+     */
+    public function signedAgainst(Direction $normalBalance): Money
+    {
+        return $this->direction === $normalBalance
+            ? $this->amount
+            : $this->amount->negate();
+    }
 }
