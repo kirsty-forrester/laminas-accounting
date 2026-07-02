@@ -2,6 +2,16 @@
 
 A small test project: a double-entry bookkeeping app based on the Laminas in-depth tutorial. Deliberately over-engineered to practice conventions. Deliberately over-the-top UI design.
 
+## Screenshots
+
+The chart of accounts (the landing page), grouped and colour-coordinated by account type:
+
+<img src="docs/img/chart_screenshot.png" alt="Chart of accounts" width="700">
+
+A journal entry with its balanced debit/credit lines and lifecycle status:
+
+<img src="docs/img/journal_screenshot.png" alt="Journal entry" width="700">
+
 ## Using docker-compose
 
 This skeleton provides a `docker-compose.yml` for use with [docker-compose](https://docs.docker.com/compose/);
