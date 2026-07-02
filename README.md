@@ -12,6 +12,11 @@ Creating a journal entry — pick accounts and enter debit/credit lines
 
 <img src="docs/img/journal_screenshot.png" alt="New journal entry form" width="700">
 
+## Acknowledgements
+
+- Structure and approach are based heavily on the [Laminas in-depth tutorial](https://docs.laminas.dev/tutorials/in-depth-guide/)
+- Developed with [Claude Code](https://claude.com/claude-code) as a pair-programming assistant — accelerating implementation and talking through Laminas conventions. Design decisions and direction are my own.
+
 ## Using docker-compose
 
 This skeleton provides a `docker-compose.yml` for use with [docker-compose](https://docs.docker.com/compose/);
@@ -133,3 +138,4 @@ $ composer cs-fix
 # Run PHPUnit tests:
 $ composer test
 ```
+
