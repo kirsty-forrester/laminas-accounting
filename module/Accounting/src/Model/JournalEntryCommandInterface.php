@@ -11,4 +11,12 @@ interface JournalEntryCommandInterface
      * @return JournalEntry The inserted journal entry, with identifier.
      */
     public function insertJournalEntry(JournalEntry $journalEntry): JournalEntry;
+
+    /**
+     * Update a journal entry
+     * 
+     * @param JournalEntry $journalEntry The journal entry to update
+     * @return JournalEntry The updated journal entry.
+     */
+    public function updateJournalEntry(JournalEntry $journalEntry): JournalEntry;
 }

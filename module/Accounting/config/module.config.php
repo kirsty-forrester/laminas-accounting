@@ -115,6 +115,8 @@ return [
         'factories' => [
             Service\Ledger::class
             => Service\LedgerFactory::class,
+            Service\JournalEntryLifecycle::class
+            => ReflectionBasedAbstractFactory::class,
             Persistence\AccountRepository::class
             => Persistence\AccountRepositoryFactory::class,
             Persistence\JournalEntryRepository::class

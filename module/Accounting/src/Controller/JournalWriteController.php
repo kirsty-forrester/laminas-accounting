@@ -15,6 +15,7 @@ use Accounting\ValueObject\JournalEntryStatus;
 use Accounting\ValueObject\Money;
 use Laminas\Mvc\Controller\AbstractActionController;
 use DateTimeImmutable;
+use InvalidArgumentException;
 
 class JournalWriteController extends AbstractActionController
 {
@@ -66,7 +67,7 @@ class JournalWriteController extends AbstractActionController
 
         try {
             $this->lifecycle->transitionTo($id, $to);
-        } catch (IllegalTransitionException | UnbalancedJournalEntryException $e) {
+        } catch (IllegalTransitionException | UnbalancedJournalEntryException | InvalidArgumentException $e) {
             // TODO: flash messenger
         }
 

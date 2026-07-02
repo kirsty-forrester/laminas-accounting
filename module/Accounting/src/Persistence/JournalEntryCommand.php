@@ -40,6 +40,27 @@ class JournalEntryCommand implements JournalEntryCommandInterface
         return $journalEntry;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function updateJournalEntry(JournalEntry $journalEntry): JournalEntry
+    {
+        $sql  = new Sql($this->db);
+        $data = [
+            'date'        => $journalEntry->getDate()->format('Y-m-d'),
+            'description' => $journalEntry->getDescription(),
+            'status'      => $journalEntry->getStatus()->value,
+        ];
+
+        // Updates the entry's own columns only. Lines are managed separately
+        $update = $sql->update('journal_entry')
+            ->set($data)
+            ->where(['journal_entry_id' => $journalEntry->getJournalEntryId()]);
+        $sql->prepareStatementForSqlObject($update)->execute();
+
+        return $journalEntry;
+    }
+
     private function saveLines(JournalEntry $journalEntry): void
     {
         $sql = new Sql($this->db);
