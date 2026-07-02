@@ -2,6 +2,7 @@
 namespace Accounting;
 
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
+use Laminas\ServiceManager\Factory\InvokableFactory;
 use Laminas\Router\Http\Segment;
 use Laminas\Router\Http\Literal;
 
@@ -125,6 +126,17 @@ return [
             => ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryCommand::class
             => ReflectionBasedAbstractFactory::class,
+        ],
+    ],
+
+    'view_helpers' => [
+        'aliases' => [
+            'accountType'       => View\Helper\AccountTypeHelper::class,
+            'journalEntryStatus' => View\Helper\JournalEntryStatusHelper::class,
+        ],
+        'factories' => [
+            View\Helper\AccountTypeHelper::class        => InvokableFactory::class,
+            View\Helper\JournalEntryStatusHelper::class => InvokableFactory::class,
         ],
     ],
 

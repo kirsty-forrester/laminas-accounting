@@ -50,9 +50,10 @@ final class LedgerTest extends TestCase
             /** @param JournalEntry[] $entries */
             public function __construct(private array $entries) {}
 
-            public function find(int $id): ?JournalEntry
+            public function find(int $id): JournalEntry
             {
-                return $this->entries[$id] ?? null;
+                return $this->entries[$id]
+                    ?? throw new \InvalidArgumentException(sprintf('Journal entry "%d" not found.', $id));
             }
 
             public function all(): array

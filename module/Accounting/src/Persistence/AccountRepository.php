@@ -6,8 +6,10 @@ use Accounting\Model\Account;
 use Accounting\Model\AccountRepositoryInterface;
 use Accounting\ValueObject\AccountType;
 use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Adapter\Driver\ResultInterface;
 use Laminas\Db\Sql\Sql;
 use InvalidArgumentException;
+use RuntimeException;
 
 class AccountRepository implements AccountRepositoryInterface
 {
@@ -15,9 +17,19 @@ class AccountRepository implements AccountRepositoryInterface
 
     public function find(int $id): Account
     {
-        $sql = new Sql($this->db);
-        $select = $sql->select('account')->where(['account_id' => $id]);
-        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
+        $sql       = new Sql($this->db);
+        $select    = $sql->select('account')->where(['account_id = ?' => $id]);
+        $statement = $sql->prepareStatementForSqlObject($select);
+        $result    = $statement->execute();
+
+        if (! $result instanceof ResultInterface || ! $result->isQueryResult()) {
+            throw new RuntimeException(sprintf(
+                'Failed retrieving account with identifier "%s"; unknown database error.',
+                $id
+            ));
+        }
+
+        $row = $result->current();
 
         if (! $row) {
             throw new InvalidArgumentException(sprintf(

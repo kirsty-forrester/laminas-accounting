@@ -1,18 +1,7 @@
 <?php
 
-use Accounting\ValueObject\JournalEntryStatus;
-
 $title = 'Journal Entries';
 $this->headTitle($title);
-
-// Bootstrap contextual colour for each lifecycle status.
-$statusColours = [
-    JournalEntryStatus::Draft->value     => 'secondary',
-    JournalEntryStatus::Submitted->value => 'info',
-    JournalEntryStatus::Approved->value  => 'primary',
-    JournalEntryStatus::Posted->value    => 'success',
-    JournalEntryStatus::Voided->value    => 'dark',
-];
 
 // all() returns an array of JournalEntry aggregates (each with its lines loaded).
 $entries = $journal_entries;
@@ -50,7 +39,7 @@ $entries = $journal_entries;
                 <td><?= $this->escapeHtml($entry->getDate()->format('Y-m-d')) ?></td>
                 <td><?= $this->escapeHtml($entry->getDescription()) ?></td>
                 <td>
-                    <span class="badge bg-<?= $this->escapeHtmlAttr($statusColours[$status->value] ?? 'secondary') ?>">
+                    <span class="badge bg-<?= $this->escapeHtmlAttr($this->journalEntryStatus()->colour($status)) ?>">
                         <?= $this->escapeHtml(ucfirst($status->value)) ?>
                     </span>
                     <?php if (! $entry->isBalanced()) : ?>

@@ -7,7 +7,6 @@ use Accounting\Model\JournalEntry;
 use Accounting\Model\JournalEntryCommandInterface;
 use Accounting\Model\JournalEntryRepositoryInterface;
 use Accounting\ValueObject\JournalEntryStatus;
-use InvalidArgumentException;
 
 class JournalEntryLifecycle
 {
@@ -18,11 +17,8 @@ class JournalEntryLifecycle
 
     public function transitionTo(int $id, JournalEntryStatus $to): JournalEntry
     {
+        // find() throws InvalidArgumentException if the id is unknown.
         $entry = $this->journalEntryRepo->find($id);
-
-        if ($entry === null) {
-            throw new InvalidArgumentException(sprintf('Journal entry "%d" not found.', $id));
-        }
 
         return match ($to) {
             JournalEntryStatus::Submitted => $this->submitJournalEntry($entry),

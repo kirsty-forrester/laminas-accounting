@@ -5,6 +5,7 @@ namespace Accounting\Controller;
 use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Service\Ledger;
 use Laminas\Mvc\Controller\AbstractActionController;
+use InvalidArgumentException;
 
 class AccountListController extends AbstractActionController
 {
@@ -29,9 +30,16 @@ class AccountListController extends AbstractActionController
             return $this->redirect()->toRoute('accounts');
         }
 
+        try {
+            $account = $this->repository->find($id);
+            $balance = $this->ledger->balanceFor($id);
+        } catch (InvalidArgumentException $e) {
+            return $this->redirect()->toRoute('accounts');
+        }
+
         return [
-            'account' => $this->repository->find($id),
-            'balance' => $this->ledger->balanceFor($id),
+            'account' => $account,
+            'balance' => $balance,
         ];
     }
 }

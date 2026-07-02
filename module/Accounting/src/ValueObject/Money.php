@@ -8,10 +8,18 @@ final class Money
 
     public static function fromDecimal(string $pounds): self
     {
-        // "500.00" → 50000
-        $pennies = (int) round(((float) $pounds) * 100);
-        
-        return new self($pennies);
+        // Parse "500.00" / "-12.34" / "0.1" to pennies as integers — no floats
+        // (imprecise) and no bcmath (not always installed).
+        $pounds   = trim($pounds);
+        $negative = str_starts_with($pounds, '-');
+        $digits   = ltrim($pounds, '+-');
+
+        [$whole, $frac] = array_pad(explode('.', $digits, 2), 2, '');
+        $frac = substr($frac . '00', 0, 2); // pad/truncate to 2 decimal places
+
+        $pennies = ((int) $whole) * 100 + (int) $frac;
+
+        return new self($negative ? -$pennies : $pennies);
     }
 
     public static function fromMinor(int $pennies): self

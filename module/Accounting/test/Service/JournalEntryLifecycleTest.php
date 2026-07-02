@@ -51,9 +51,10 @@ final class JournalEntryLifecycleTest extends TestCase
             /** @param array<int, JournalEntry> $byId */
             public function __construct(private array $byId) {}
 
-            public function find(int $id): ?JournalEntry
+            public function find(int $id): JournalEntry
             {
-                return $this->byId[$id] ?? null;
+                return $this->byId[$id]
+                    ?? throw new InvalidArgumentException(sprintf('Journal entry "%d" not found.', $id));
             }
 
             public function all(): array

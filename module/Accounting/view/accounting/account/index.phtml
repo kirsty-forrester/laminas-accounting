@@ -30,8 +30,8 @@ $order = [
     <?php $group = $byType[$type->value] ?? []; ?>
     <?php if (! $group) { continue; } ?>
 
-    <section class="account-group" style="--accent: <?= $this->escapeHtmlAttr($type->colour()) ?>;">
-        <h2 class="account-group-title"><?= $this->escapeHtml($type->heading()) ?></h2>
+    <section class="account-group" style="--accent: <?= $this->escapeHtmlAttr($this->accountType()->colour($type)) ?>;">
+        <h2 class="account-group-title"><?= $this->escapeHtml($this->accountType()->heading($type)) ?></h2>
 
         <table class="table table-striped align-middle account-table">
             <thead>

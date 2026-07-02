@@ -9,21 +9,37 @@ use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\Money;
 use Accounting\ValueObject\JournalEntryStatus;
 use DateTimeImmutable;
+use InvalidArgumentException;
+use RuntimeException;
 use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Adapter\Driver\ResultInterface;
 use Laminas\Db\Sql\Sql;
 
 class JournalEntryRepository implements JournalEntryRepositoryInterface
 {
     public function __construct(private AdapterInterface $db) {}
 
-    public function find(int $id): ?JournalEntry
+    public function find(int $id): JournalEntry
     {
-        $sql = new Sql($this->db);
-        $select = $sql->select('journal_entry')->where(['journal_entry_id' => $id]);
-        $row = $sql->prepareStatementForSqlObject($select)->execute()->current();
+        $sql       = new Sql($this->db);
+        $select    = $sql->select('journal_entry')->where(['journal_entry_id = ?' => $id]);
+        $statement = $sql->prepareStatementForSqlObject($select);
+        $result    = $statement->execute();
+
+        if (! $result instanceof ResultInterface || ! $result->isQueryResult()) {
+            throw new RuntimeException(sprintf(
+                'Failed retrieving journal entry with identifier "%s"; unknown database error.',
+                $id
+            ));
+        }
+
+        $row = $result->current();
 
         if (! $row) {
-            return null;
+            throw new InvalidArgumentException(sprintf(
+                'Journal entry with identifier "%s" not found.',
+                $id
+            ));
         }
 
         return $this->hydrate($row);

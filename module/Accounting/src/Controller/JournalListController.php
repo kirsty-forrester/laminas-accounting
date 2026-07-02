@@ -5,6 +5,7 @@ namespace Accounting\Controller;
 use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Model\JournalEntryRepositoryInterface;
 use Laminas\Mvc\Controller\AbstractActionController;
+use InvalidArgumentException;
 
 class JournalListController extends AbstractActionController
 {
@@ -28,9 +29,9 @@ class JournalListController extends AbstractActionController
             return $this->redirect()->toRoute('journals');
         }
 
-        $journalEntry = $this->journalEntryRepo->find($id);
-
-        if ($journalEntry === null) {
+        try {
+            $journalEntry = $this->journalEntryRepo->find($id);
+        } catch (InvalidArgumentException $e) {
             return $this->redirect()->toRoute('journals');
         }
 
