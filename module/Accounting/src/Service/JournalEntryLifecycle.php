@@ -3,12 +3,30 @@
 namespace Accounting\Service;
 
 use Accounting\Model\JournalEntry;
+use Accounting\Model\JournalEntryRepositoryInterface;
+use Accounting\ValueObject\JournalEntryStatus;
 use Laminas\Db\Adapter\AdapterInterface;
 use Laminas\Db\Sql\Sql;
 
 class JournalEntryLifecycle
 {
-    public function __construct(private AdapterInterface $db) {}
+    public function __construct(
+        private AdapterInterface $db,
+        private JournalEntryRepositoryInterface $journalEntryRepo
+    ) {}
+
+    public function transitionTo(int $id, JournalEntryStatus $to): JournalEntry
+    {
+        $entry = $this->journalEntryRepo->find($id);
+
+        return match ($to) {
+            JournalEntryStatus::Submitted => $this->submitJournalEntry($entry),
+            JournalEntryStatus::Approved  => $this->approveJournalEntry($entry),
+            JournalEntryStatus::Posted    => $this->postJournalEntry($entry),
+            JournalEntryStatus::Voided    => $this->voidJournalEntry($entry),
+            default => throw new IllegalTransitionException($entry->getStatus(), $to),
+        };
+    }
 
     /**
      * Submit a draft entry for approval and persist the new status.
