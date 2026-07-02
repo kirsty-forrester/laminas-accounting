@@ -2,46 +2,22 @@
 
 namespace Accounting\Controller;
 
-use Accounting\Model\AccountCommandInterface;
-use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Form\AccountForm;
 use Accounting\Model\Account;
-use Accounting\Service\Ledger;
+use Accounting\Model\AccountCommandInterface;
+use Accounting\Model\AccountRepositoryInterface;
 use Accounting\ValueObject\AccountType;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 use InvalidArgumentException;
 
-class AccountController extends AbstractActionController
+class AccountWriteController extends AbstractActionController
 {
     public function __construct(
-        private AccountCommandInterface $accountCommand,
-        private AccountRepositoryInterface $accountRepo,
-        private AccountForm $form,
-        private Ledger $ledger,
+        private AccountCommandInterface $command,
+        private AccountRepositoryInterface $repository,
+        private AccountForm $form
     ) {}
-
-    public function indexAction()
-    {
-        return [
-            'accounts' => $this->accountRepo->all(),
-            'balances' => $this->ledger->balances(),
-        ];
-    }
-
-    public function viewAction()
-    {
-        $id = (int) $this->params()->fromRoute('id');
-
-        if (! $id) {
-            return $this->redirect()->toRoute('accounts');
-        }
-
-        return [
-            'account' => $this->accountRepo->find($id),
-            'balance' => $this->ledger->balanceFor($id),
-        ];
-    }
 
     public function addAction()
     {
@@ -65,9 +41,9 @@ class AccountController extends AbstractActionController
             $data['name'],
             AccountType::from($data['account_type']),
         );
-        $this->accountCommand->insertAccount($account);
+        $this->command->insertAccount($account);
 
-        return $this->redirect()->toRoute('account');
+        return $this->redirect()->toRoute('accounts');
     }
 
     public function editAction()
@@ -75,13 +51,13 @@ class AccountController extends AbstractActionController
         $id = (int) $this->params()->fromRoute('id');
 
         if (! $id) {
-            return $this->redirect()->toRoute('accounts', ['action' => 'add']);
+            return $this->redirect()->toRoute('accounts/add');
         }
 
         try {
-            $account = $this->accountRepo->find($id);
+            $account = $this->repository->find($id);
         } catch (InvalidArgumentException $ex) {
-            return $this->redirect()->toRoute('account');
+            return $this->redirect()->toRoute('accounts');
         }
 
         $this->form->setData([
@@ -108,17 +84,11 @@ class AccountController extends AbstractActionController
             $data['name'],
             AccountType::from($data['account_type']),
         );
-        $account = $this->accountCommand->updateAccount($account);
-        
-        // TODO: Try child routes as shown in docs
+        $account = $this->command->updateAccount($account);
+
         return $this->redirect()->toRoute(
-            'account',
-            ['action' => 'view', 'id' => $account->getAccountId()]
+            'accounts/view',
+            ['id' => $account->getAccountId()]
         );
-    }
-
-    public function deleteAction()
-    {
-
     }
 }

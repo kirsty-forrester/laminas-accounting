@@ -25,9 +25,9 @@ $this->headTitle($title);
     </dl>
 
     <p>
-        <a href="<?= $this->url('account', ['action' => 'edit', 'id' => $account->getAccountId()]) ?>"
+        <a href="<?= $this->url('accounts/edit', ['id' => $account->getAccountId()]) ?>"
            class="btn btn-primary">Edit</a>
-        <a href="<?= $this->url('account', ['action' => 'delete', 'id' => $account->getAccountId()]) ?>"
+        <a href="<?= $this->url('accounts/delete', ['id' => $account->getAccountId()]) ?>"
            class="btn btn-danger">Delete</a>
     </p>
 </section>

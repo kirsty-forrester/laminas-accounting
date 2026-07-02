@@ -1,0 +1,19 @@
+<?php
+
+/** @var Accounting\Model\Account $account */
+$title = 'Delete Account';
+$this->headTitle($title);
+?>
+<h1><?= $this->escapeHtml($title) ?></h1>
+
+<div class="alert alert-info">
+    Are you sure you want to delete
+    <strong><?= $this->escapeHtml($account->getName()) ?></strong>
+    (<?= $this->escapeHtml(ucfirst($account->getType()->value)) ?>)?
+</div>
+
+<form action="<?= $this->url('accounts/delete', ['id' => $account->getAccountId()]) ?>" method="post">
+    <input type="hidden" name="id" value="<?= $this->escapeHtmlAttr($account->getAccountId()) ?>">
+    <button type="submit" name="confirm" value="Delete" class="btn btn-danger">Delete</button>
+    <a href="<?= $this->url('accounts') ?>" class="btn btn-outline-secondary">Cancel</a>
+</form>

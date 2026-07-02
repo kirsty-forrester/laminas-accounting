@@ -23,7 +23,7 @@ $order = [
 <h1><?= $this->escapeHtml($title) ?></h1>
 
 <p>
-    <a href="<?= $this->url('account', ['action' => 'add']) ?>" class="btn btn-primary">Add New Account</a>
+    <a href="<?= $this->url('accounts/add') ?>" class="btn btn-primary">Add New Account</a>
 </p>
 
 <?php foreach ($order as $type) : ?>
@@ -48,11 +48,11 @@ $order = [
                     <td><?= $this->escapeHtml($account->getName()) ?></td>
                     <td class="text-end"><?= $balance ? $this->escapeHtml($balance->format()) : '' ?></td>
                     <td class="text-end">
-                        <a href="<?= $this->url('account', ['action' => 'view', 'id' => $account->getAccountId()]) ?>"
+                        <a href="<?= $this->url('accounts/view', ['id' => $account->getAccountId()]) ?>"
                            class="btn btn-sm btn-outline-secondary">View</a>
-                        <a href="<?= $this->url('account', ['action' => 'edit', 'id' => $account->getAccountId()]) ?>"
+                        <a href="<?= $this->url('accounts/edit', ['id' => $account->getAccountId()]) ?>"
                            class="btn btn-sm btn-primary">Edit</a>
-                        <a href="<?= $this->url('account', ['action' => 'delete', 'id' => $account->getAccountId()]) ?>"
+                        <a href="<?= $this->url('accounts/delete', ['id' => $account->getAccountId()]) ?>"
                            class="btn btn-sm btn-danger">Delete</a>
                     </td>
                 </tr>

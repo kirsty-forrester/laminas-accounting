@@ -5,7 +5,10 @@ namespace Accounting\Persistence;
 use Accounting\Model\AccountCommandInterface;
 use Accounting\Model\Account;
 use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Adapter\Driver\ResultInterface;
+use Laminas\Db\Sql\Delete;
 use Laminas\Db\Sql\Sql;
+use RuntimeException;
 
 class AccountCommand implements AccountCommandInterface
 {
@@ -57,6 +60,21 @@ class AccountCommand implements AccountCommandInterface
      */
     public function deleteAccount(Account $account)
     {
-        
+        if (! $account->getAccountId()) {
+            throw new RuntimeException('Cannot delete account; missing identifier');
+        }
+
+        $delete = new Delete('account');
+        $delete->where(['account_id = ?' => $account->getAccountId()]);
+
+        $sql = new Sql($this->db);
+        $statement = $sql->prepareStatementForSqlObject($delete);
+        $result = $statement->execute();
+
+        if (! $result instanceof ResultInterface) {
+            return false;
+        }
+
+        return true;
     }
 }

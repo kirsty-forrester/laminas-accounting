@@ -6,7 +6,7 @@ $this->headTitle($title);
 // The id is carried in the pre-filled hidden field; the edit route needs it in the URL.
 $id = $form->get('account_id')->getValue();
 
-$form->setAttribute('action', $this->url('account', ['action' => 'edit', 'id' => $id]));
+$form->setAttribute('action', $this->url('accounts/edit', ['id' => $id]));
 $form->setAttribute('class', 'form-horizontal');
 $form->get('submit')->setValue('Save Changes');
 $form->prepare();

@@ -13,19 +13,42 @@ return [
                 'options' => [
                     'route' => '/accounts',
                     'defaults' => [
-                        'controller' => Controller\AccountController::class,
+                        'controller' => Controller\AccountListController::class,
                         'action' => 'index',
                     ],
                 ],
-            ],
-            'account' => [
-                'type' => Segment::class,
-                'options' => [
-                    'route' => '/accounts/[:action[/:id]]',
-                    'constraints' => ['id' => '[0-9]+'],
-                    'defaults' => [
-                        'controller' => Controller\AccountController::class,
-                        'action' => 'index',
+                'may_terminate' => true, // so /accounts itself matches
+                'child_routes'  => [
+                    'view' => [
+                        'type'    => Segment::class,
+                        'options' => [
+                            'route'       => '/view/:id',
+                            'constraints' => ['id' => '[0-9]+'],
+                            'defaults'    => ['controller' => Controller\AccountListController::class,   'action' => 'view'],
+                        ],
+                    ],
+                    'add' => [
+                        'type'    => Literal::class,
+                        'options' => [
+                            'route'    => '/add',
+                            'defaults' => ['controller' => Controller\AccountWriteController::class,  'action' => 'add'],
+                        ],
+                    ],
+                    'edit' => [
+                        'type'    => Segment::class,
+                        'options' => [
+                            'route'       => '/edit/:id',
+                            'constraints' => ['id' => '[0-9]+'],
+                            'defaults'    => ['controller' => Controller\AccountWriteController::class,  'action' => 'edit'],
+                        ],
+                    ],
+                    'delete' => [
+                        'type'    => Segment::class,
+                        'options' => [
+                            'route'       => '/delete/:id',
+                            'constraints' => ['id' => '[0-9]+'],
+                            'defaults'    => ['controller' => Controller\AccountDeleteController::class, 'action' => 'delete'],
+                        ],
                     ],
                 ],
             ],
@@ -55,7 +78,9 @@ return [
 
     'controllers' => [
         'factories' => [
-            Controller\AccountController::class => ReflectionBasedAbstractFactory::class,
+            Controller\AccountListController::class => ReflectionBasedAbstractFactory::class,
+            Controller\AccountWriteController::class  => ReflectionBasedAbstractFactory::class,
+            Controller\AccountDeleteController::class => ReflectionBasedAbstractFactory::class,
             Controller\JournalController::class => ReflectionBasedAbstractFactory::class,
         ],
     ],
@@ -84,6 +109,16 @@ return [
     'view_manager' => [
         'template_path_stack' => [
             'accounting' => __DIR__ . '/../view',
+        ],
+        // The split account controllers would otherwise resolve to
+        // account-list/, account-write/, account-delete/ templates. Map those
+        // names to the shared account/ view files instead.
+        'template_map' => [
+            'accounting/account-list/index'    => __DIR__ . '/../view/accounting/account/index.phtml',
+            'accounting/account-list/view'     => __DIR__ . '/../view/accounting/account/view.phtml',
+            'accounting/account-write/add'     => __DIR__ . '/../view/accounting/account/add.phtml',
+            'accounting/account-write/edit'    => __DIR__ . '/../view/accounting/account/edit.phtml',
+            'accounting/account-delete/delete' => __DIR__ . '/../view/accounting/account/delete.phtml',
         ],
     ],
 ];
