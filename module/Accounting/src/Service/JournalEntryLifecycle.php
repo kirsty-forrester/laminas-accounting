@@ -8,6 +8,7 @@ use Accounting\Model\JournalEntryCommandInterface;
 use Accounting\Model\JournalEntryRepositoryInterface;
 use Accounting\ValueObject\JournalEntryStatus;
 
+// Application service: orchestrator, coordinates with repo/command
 class JournalEntryLifecycle
 {
     public function __construct(

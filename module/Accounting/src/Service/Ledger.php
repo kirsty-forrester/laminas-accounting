@@ -7,6 +7,7 @@ use Accounting\ValueObject\Money;
 use Accounting\Model\AccountRepositoryInterface;
 use Accounting\Model\JournalEntryRepositoryInterface;
 
+// Domain service, pure domain computation
 final class Ledger
 {
     public function __construct(

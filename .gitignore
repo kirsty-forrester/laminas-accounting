@@ -5,6 +5,8 @@ vendor/
 config/development.config.php
 data/cache/*
 !data/cache/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
 data/*.db
 data/*.sqlite
 phpunit.xml

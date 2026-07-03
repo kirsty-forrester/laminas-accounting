@@ -22,6 +22,7 @@ class JournalEntry
         private string $description,
         array $lines,
     ) {
+        // TODO: Block invariants on construction
         $this->lines = $lines;
     }
 
