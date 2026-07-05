@@ -12,6 +12,7 @@ class Account
         private AccountType $type,
     ) {}
 
+    // Could turn this into a value object
     public function getAccountId(): ?int
     {
         return $this->accountId;

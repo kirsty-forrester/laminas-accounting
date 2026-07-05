@@ -37,6 +37,29 @@ final class MoneyTest extends TestCase
         ];
     }
 
+    /**
+     * A third decimal place is rounded half-up, not truncated.
+     *
+     * @dataProvider roundingProvider
+     */
+    public function testFromDecimalRoundsThirdDecimal(string $pounds, int $expected): void
+    {
+        $this->assertSame($expected, Money::fromDecimal($pounds)->pennies);
+    }
+
+    public static function roundingProvider(): array
+    {
+        return [
+            'rounds up'          => ['12.349', 1235],
+            'rounds down'        => ['12.344', 1234],
+            'classic 2.675'      => ['2.675', 268],
+            'half rounds up'     => ['1.005', 101],
+            'carries into penny' => ['0.999', 100],
+            'carries into pound' => ['9.999', 1000],
+            'negative rounds'    => ['-12.349', -1235],
+        ];
+    }
+
     public function testAdd(): void
     {
         $sum = Money::fromMinor(1000)->add(Money::fromMinor(250));

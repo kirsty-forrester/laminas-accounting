@@ -2,10 +2,13 @@
 
 namespace Accounting\ValueObject;
 
+// For production I'd never normally use a class like this.
+// I prefer libraries.
 final class Money
 {
     private function __construct(public readonly int $pennies) {}
 
+    // TODO: Reject malformed input
     public static function fromDecimal(string $pounds): self
     {
         // Parse "500.00" / "-12.34" / "0.1" to pennies as integers — no floats
@@ -15,9 +18,14 @@ final class Money
         $digits   = ltrim($pounds, '+-');
 
         [$whole, $frac] = array_pad(explode('.', $digits, 2), 2, '');
-        $frac = substr($frac . '00', 0, 2); // pad/truncate to 2 decimal places
 
-        $pennies = ((int) $whole) * 100 + (int) $frac;
+        // Take two decimal places, rounding half-up on the third rather than
+        // truncating it: 12.349 -> 12.35, 9.999 -> 10.00.
+        $frac    = str_pad($frac, 3, '0');
+        $pennies = ((int) $whole) * 100 + (int) substr($frac, 0, 2);
+        if ((int) $frac[2] >= 5) {
+            $pennies++;
+        }
 
         return new self($negative ? -$pennies : $pennies);
     }

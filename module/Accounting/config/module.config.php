@@ -147,6 +147,7 @@ return [
         // The split account controllers would otherwise resolve to
         // account-list/, account-write/, account-delete/ templates. Map those
         // names to the shared account/ view files instead.
+        // TODO: I don't like this. Just move the files
         'template_map' => [
             'accounting/account-list/index'    => __DIR__ . '/../view/accounting/account/index.phtml',
             'accounting/account-list/view'     => __DIR__ . '/../view/accounting/account/view.phtml',
