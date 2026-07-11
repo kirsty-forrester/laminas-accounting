@@ -71,7 +71,7 @@ final class JournalEntryLifecycleTest extends TestCase
 
     private function line(Direction $direction, int $pennies): JournalEntryLine
     {
-        return new JournalEntryLine(null, null, 1, $direction, Money::fromMinor($pennies));
+        return new JournalEntryLine(null, 1, $direction, Money::fromMinor($pennies));
     }
 
     /** @param JournalEntryLine[] $lines */

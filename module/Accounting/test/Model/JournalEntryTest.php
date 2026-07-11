@@ -18,7 +18,7 @@ final class JournalEntryTest extends TestCase
 {
     private function line(int $accountId, Direction $direction, int $pennies): JournalEntryLine
     {
-        return new JournalEntryLine(null, null, $accountId, $direction, Money::fromMinor($pennies));
+        return new JournalEntryLine(null, $accountId, $direction, Money::fromMinor($pennies));
     }
 
     /** @param JournalEntryLine[] $lines */
@@ -71,14 +71,15 @@ final class JournalEntryTest extends TestCase
         $this->assertSame(JournalEntryStatus::Submitted, $submitted->getStatus());
     }
 
-    public function testSubmitReturnsNewInstanceLeavingOriginalUnchanged(): void
+    public function testSubmitMutatesInPlaceAndReturnsSameInstance(): void
     {
         $draft = $this->entry(JournalEntryStatus::Draft, $this->balancedLines());
 
         $submitted = $draft->submit();
 
-        $this->assertNotSame($draft, $submitted);
-        $this->assertSame(JournalEntryStatus::Draft, $draft->getStatus());
+        // Mutable now: same object, status advanced.
+        $this->assertSame($draft, $submitted);
+        $this->assertSame(JournalEntryStatus::Submitted, $draft->getStatus());
     }
 
     public function testSubmitUnbalancedEntryThrows(): void

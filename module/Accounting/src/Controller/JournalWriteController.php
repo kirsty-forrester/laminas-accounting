@@ -100,7 +100,6 @@ class JournalWriteController extends AbstractActionController
 
             $lines[] = new JournalEntryLine(
                 $lineId,
-                null,                     // journal_entry_id assigned on save
                 (int) $row['account_id'],
                 $direction,
                 $amount,

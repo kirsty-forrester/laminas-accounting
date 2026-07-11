@@ -7,22 +7,25 @@ use Accounting\ValueObject\Money;
 
 class JournalEntryLine
 {
+    /** The owning side of the association back to the parent entry. */
+    private ?JournalEntry $journalEntry = null;
+
     public function __construct(
         private ?int $journalEntryLineId,
-        private ?int $journalEntryId,
         private int $accountId,
         private Direction $direction,
         private Money $amount,
     ) {}
 
+    /** Called by JournalEntry::addLine() to set the back-reference. */
+    public function assignToEntry(JournalEntry $entry): void
+    {
+        $this->journalEntry = $entry;
+    }
+
     public function getJournalEntryLineId(): ?int
     {
         return $this->journalEntryLineId;
-    }
-
-    public function getJournalEntryId(): ?int
-    {
-        return $this->journalEntryId;
     }
 
     public function getAccountId(): int
@@ -40,11 +43,6 @@ class JournalEntryLine
         return $this->amount;
     }
 
-    /**
-     * The amount this line contributes to a balance whose positive side is
-     * $normalBalance: positive when the line sits on that side, negative when
-     * it sits on the opposite side.
-     */
     public function signedAgainst(Direction $normalBalance): Money
     {
         return $this->direction === $normalBalance

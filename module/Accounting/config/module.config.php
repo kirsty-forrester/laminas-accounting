@@ -122,7 +122,7 @@ return [
             Persistence\AccountRepository::class
             => Persistence\ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryRepository::class
-            => Persistence\JournalEntryRepositoryFactory::class,
+            => Persistence\ReflectionBasedAbstractFactory::class,
             Persistence\AccountCommand::class
             => ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryCommand::class

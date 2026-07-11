@@ -3,115 +3,42 @@
 namespace Accounting\Persistence;
 
 use Accounting\Model\JournalEntry;
-use Accounting\Model\JournalEntryLine;
 use Accounting\Model\JournalEntryRepositoryInterface;
-use Accounting\ValueObject\Direction;
-use Accounting\ValueObject\Money;
 use Accounting\ValueObject\JournalEntryStatus;
-use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
-use RuntimeException;
-use Laminas\Db\Adapter\AdapterInterface;
-use Laminas\Db\Adapter\Driver\ResultInterface;
-use Laminas\Db\Sql\Sql;
 
 class JournalEntryRepository implements JournalEntryRepositoryInterface
 {
-    public function __construct(private AdapterInterface $db) {}
+    public function __construct(private EntityManagerInterface $em) {}
 
     public function find(int $id): JournalEntry
     {
-        $sql       = new Sql($this->db);
-        $select    = $sql->select('journal_entry')->where(['journal_entry_id = ?' => $id]);
-        $statement = $sql->prepareStatementForSqlObject($select);
-        $result    = $statement->execute();
+        $entry = $this->em->find(JournalEntry::class, $id);
 
-        if (! $result instanceof ResultInterface || ! $result->isQueryResult()) {
-            throw new RuntimeException(sprintf(
-                'Failed retrieving journal entry with identifier "%s"; unknown database error.',
-                $id
-            ));
-        }
-
-        $row = $result->current();
-
-        if (! $row) {
+        if ($entry === null) {
             throw new InvalidArgumentException(sprintf(
                 'Journal entry with identifier "%s" not found.',
                 $id
             ));
         }
 
-        return $this->hydrate($row);
+        return $entry;
     }
 
     /** @return JournalEntry[] */
     public function all(): array
     {
-        $sql = new Sql($this->db);
-        $select = $sql->select('journal_entry');
-        $results = $sql->prepareStatementForSqlObject($select)->execute();
-
-        $entries = [];
-        foreach ($results as $row) {
-            $entries[] = $this->hydrate($row);
-        }
-
-        return $entries;
+        return $this->em->getRepository(JournalEntry::class)->findAll();
     }
 
-    /**
-     * Return posted journal entries
-     * 
-     * @return JournalEntry[]
-     */
+    /** @return JournalEntry[] */
     public function posted(): array
     {
-        $sql = new Sql($this->db);
-        $select = $sql->select('journal_entry')->where(['status' => JournalEntryStatus::Posted->value]);
-        $results = $sql->prepareStatementForSqlObject($select)->execute();
-
-        $entries = [];
-        foreach ($results as $row) {
-            $entries[] = $this->hydrate($row);
-        }
-
-        return $entries;
-    }
-
-    private function hydrate(array $row): JournalEntry
-    {
-        $journalEntryId = (int) $row['journal_entry_id'];
-
-        return new JournalEntry(
-            $journalEntryId,
-            new DateTimeImmutable($row['date']),
-            JournalEntryStatus::from($row['status']),
-            $row['description'],
-            $this->linesFor($journalEntryId),
-        );
-    }
-
-    /** @return JournalEntryLine[] */
-    private function linesFor(int $journalEntryId): array
-    {
-        $sql = new Sql($this->db);
-        $select = $sql
-            ->select('journal_entry_line')
-            ->where(['journal_entry_id' => $journalEntryId]);
-        $results = $sql->prepareStatementForSqlObject($select)->execute();
-
-        $lines = [];
-        foreach ($results as $row) {
-            $lines[] = new JournalEntryLine(
-                (int) $row['journal_entry_line_id'],
-                (int) $row['journal_entry_id'],
-                (int) $row['account_id'],
-                Direction::from($row['direction']),
-                Money::fromMinor((int) $row['amount']),
-            );
-        }
-
-        return $lines;
+        // We pass the enum's backing value, not the enum object: findBy binds
+        // criteria through the column's *string* DBAL type, which expects the
+        // scalar. (Writing an entity converts the enum for you; querying doesn't.)
+        return $this->em->getRepository(JournalEntry::class)
+            ->findBy(['status' => JournalEntryStatus::Posted->value]);
     }
 }

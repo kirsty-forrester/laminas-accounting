@@ -7,12 +7,14 @@ use Accounting\ValueObject\Money;
 use Accounting\ValueObject\JournalEntryStatus;
 use Accounting\Exceptions\IllegalTransitionException;
 use Accounting\Exceptions\UnbalancedJournalEntryException;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use DateTimeImmutable;
 
 class JournalEntry
 {
-    /** @var JournalEntryLine[] */
-    private array $lines;
+    /** @var Collection<int, JournalEntryLine> */
+    private Collection $lines;
 
     /** @param JournalEntryLine[] $lines */
     public function __construct(
@@ -20,10 +22,22 @@ class JournalEntry
         private DateTimeImmutable $date,
         private JournalEntryStatus $status,
         private string $description,
-        array $lines,
+        array $lines = [],
     ) {
-        // TODO: Block invariants on construction
-        $this->lines = $lines;
+        // Doctrine bypasses this constructor when loading from the DB (it injects
+        // a PersistentCollection directly). This runs only for *new* entries built
+        // in app code, where we wrap the array and wire up the back-references.
+        $this->lines = new ArrayCollection();
+        foreach ($lines as $line) {
+            $this->addLine($line);
+        }
+    }
+
+    /** Keeps both sides of the association in sync — the line's FK is the owning side. */
+    public function addLine(JournalEntryLine $line): void
+    {
+        $line->assignToEntry($this);
+        $this->lines->add($line);
     }
 
     public function getJournalEntryId(): ?int
@@ -41,17 +55,12 @@ class JournalEntry
         return $this->description;
     }
 
-    /**
-     * @return JournalEntryLine[]
-     */
+    /** @return JournalEntryLine[] */
     public function getLines(): array
     {
-        return $this->lines;
+        return $this->lines->toArray();
     }
 
-    /**
-     * @return JournalEntryStatus
-     */
     public function getStatus(): JournalEntryStatus
     {
         return $this->status;
@@ -65,11 +74,6 @@ class JournalEntry
     public function total(): Money
     {
         return $this->totalFor(Direction::Debit);
-    }
-
-    private function withStatus(JournalEntryStatus $status): self
-    {
-        return new self($this->journalEntryId, $this->date, $status, $this->description, $this->lines);
     }
 
     private function totalFor(Direction $direction): Money
@@ -103,27 +107,28 @@ class JournalEntry
             );
         }
 
-        return $this->withStatus(JournalEntryStatus::Submitted);
+        $this->status = JournalEntryStatus::Submitted; // mutate in place
+        return $this;
     }
 
     public function approve(): self
     {
         $this->guardCanTransitionTo(JournalEntryStatus::Approved);
-
-        return $this->withStatus(JournalEntryStatus::Approved);
+        $this->status = JournalEntryStatus::Approved;
+        return $this;
     }
 
     public function post(): self
     {
         $this->guardCanTransitionTo(JournalEntryStatus::Posted);
-        
-        return $this->withStatus(JournalEntryStatus::Posted);
+        $this->status = JournalEntryStatus::Posted;
+        return $this;
     }
-    
+
     public function void(): self
     {
         $this->guardCanTransitionTo(JournalEntryStatus::Voided);
-        
-        return $this->withStatus(JournalEntryStatus::Voided);
+        $this->status = JournalEntryStatus::Voided;
+        return $this;
     }
 }

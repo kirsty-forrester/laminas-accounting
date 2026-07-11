@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="Accounting\Model\JournalEntryLine" table="journal_entry_line">
+        <id name="journalEntryLineId" type="integer" column="journal_entry_line_id">
+            <generator strategy="IDENTITY"/>
+        </id>
+
+        <!-- Reference to the Account aggregate, held by identity (a plain int). -->
+        <field name="accountId" type="integer" column="account_id"/>
+
+        <field name="direction" type="string" column="direction"
+               enum-type="Accounting\ValueObject\Direction"/>
+
+        <!-- The custom DBAL type-->
+        <field name="amount" type="money" column="amount"/>
+
+        <!-- Owning side: this is where the FK column lives. -->
+        <many-to-one field="journalEntry"
+                     target-entity="Accounting\Model\JournalEntry"
+                     inversed-by="lines">
+            <join-column name="journal_entry_id"
+                         referenced-column-name="journal_entry_id"
+                         nullable="false"/>
+        </many-to-one>
+    </entity>
+</doctrine-mapping>

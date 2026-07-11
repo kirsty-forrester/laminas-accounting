@@ -7,74 +7,62 @@ namespace AccountingTest\Persistence;
 use Accounting\Model\JournalEntry;
 use Accounting\Model\JournalEntryLine;
 use Accounting\Persistence\JournalEntryCommand;
+use Accounting\Persistence\Type\MoneyType;
 use Accounting\ValueObject\Direction;
 use Accounting\ValueObject\JournalEntryStatus;
 use Accounting\ValueObject\Money;
 use DateTimeImmutable;
-use Laminas\Db\Adapter\Adapter;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\ORMSetup;
+use Doctrine\ORM\Tools\SchemaTool;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Integration test for the SQL write path — the one place the persistence
- * actually hits a database. Uses in-memory SQLite.
+ * Integration test for the Doctrine write path against in-memory SQLite.
  */
 final class JournalEntryCommandTest extends TestCase
 {
-    private Adapter $adapter;
+    private EntityManagerInterface $em;
     private JournalEntryCommand $command;
 
     protected function setUp(): void
     {
-        $this->adapter = new Adapter(['driver' => 'Pdo_Sqlite', 'database' => ':memory:']);
-
-        foreach ([
-            'CREATE TABLE journal_entry (
-                journal_entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date TEXT NOT NULL,
-                description TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT \'draft\'
-            )',
-            'CREATE TABLE journal_entry_line (
-                journal_entry_line_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                journal_entry_id INTEGER NOT NULL,
-                account_id INTEGER NOT NULL,
-                direction TEXT NOT NULL,
-                amount INTEGER NOT NULL
-            )',
-        ] as $ddl) {
-            $this->adapter->query($ddl, Adapter::QUERY_MODE_EXECUTE);
+        if (! Type::hasType(MoneyType::NAME)) {
+            Type::addType(MoneyType::NAME, MoneyType::class);
         }
 
-        $this->command = new JournalEntryCommand($this->adapter);
+        $config = ORMSetup::createXMLMetadataConfiguration(
+            [__DIR__ . '/../../config/orm'],
+            true,
+        );
+        $connection = DriverManager::getConnection(
+            ['driver' => 'pdo_sqlite', 'memory' => true],
+            $config,
+        );
+        $this->em = new EntityManager($connection, $config);
+
+        // Build the schema from our mappings.
+        $schemaTool = new SchemaTool($this->em);
+        $schemaTool->createSchema($this->em->getMetadataFactory()->getAllMetadata());
+
+        $this->command = new JournalEntryCommand($this->em);
     }
 
-    private function draft(?int $id = null): JournalEntry
+    private function draft(): JournalEntry
     {
         return new JournalEntry(
-            $id,
+            null,
             new DateTimeImmutable('2026-01-01'),
             JournalEntryStatus::Draft,
             'Test entry',
             [
-                new JournalEntryLine(null, null, 1, Direction::Debit, Money::fromMinor(1000)),
-                new JournalEntryLine(null, null, 2, Direction::Credit, Money::fromMinor(1000)),
+                new JournalEntryLine(null, 1, Direction::Debit, Money::fromMinor(1000)),
+                new JournalEntryLine(null, 2, Direction::Credit, Money::fromMinor(1000)),
             ],
         );
-    }
-
-    /** @return array<int, string> line id => direction */
-    private function storedLines(int $entryId): array
-    {
-        $rows = $this->adapter->query(
-            "SELECT journal_entry_line_id, direction FROM journal_entry_line WHERE journal_entry_id = $entryId",
-            Adapter::QUERY_MODE_EXECUTE
-        );
-
-        $lines = [];
-        foreach ($rows as $row) {
-            $lines[(int) $row['journal_entry_line_id']] = $row['direction'];
-        }
-        return $lines;
     }
 
     public function testInsertPersistsRowWithGeneratedIdAndLines(): void
@@ -82,26 +70,28 @@ final class JournalEntryCommandTest extends TestCase
         $saved = $this->command->insertJournalEntry($this->draft());
 
         $this->assertNotNull($saved->getJournalEntryId());
-        $this->assertCount(2, $this->storedLines($saved->getJournalEntryId()));
+        $this->assertCount(2, $saved->getLines());
+
+        // Re-read from a cleared EM to prove it round-tripped to the database.
+        $this->em->clear();
+        $reloaded = $this->em->find(JournalEntry::class, $saved->getJournalEntryId());
+        $this->assertCount(2, $reloaded->getLines());
     }
 
     public function testUpdatePersistsStatusWithoutTouchingLines(): void
     {
-        $saved = $this->command->insertJournalEntry($this->draft());
-        $id    = $saved->getJournalEntryId();
+        $saved   = $this->command->insertJournalEntry($this->draft());
+        $lineIds = array_map(fn ($l) => $l->getJournalEntryLineId(), $saved->getLines());
 
-        $lineIdsBefore = array_keys($this->storedLines($id));
-
-        // Transition to submitted and persist via the command.
         $this->command->updateJournalEntry($saved->submit());
 
-        $row = $this->adapter->query(
-            "SELECT status FROM journal_entry WHERE journal_entry_id = $id",
-            Adapter::QUERY_MODE_EXECUTE
-        )->current();
+        $this->em->clear();
+        $reloaded = $this->em->find(JournalEntry::class, $saved->getJournalEntryId());
 
-        $this->assertSame('submitted', $row['status']);
-        // Lines must be left alone — same ids, not deleted/reinserted.
-        $this->assertSame($lineIdsBefore, array_keys($this->storedLines($id)));
+        $this->assertSame(JournalEntryStatus::Submitted, $reloaded->getStatus());
+        $reloadedLineIds = array_map(fn ($l) => $l->getJournalEntryLineId(), $reloaded->getLines());
+        sort($lineIds);
+        sort($reloadedLineIds);
+        $this->assertSame($lineIds, $reloadedLineIds, 'Lines untouched by a status update');
     }
 }

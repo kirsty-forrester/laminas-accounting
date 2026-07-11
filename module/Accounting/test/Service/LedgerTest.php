@@ -75,7 +75,7 @@ final class LedgerTest extends TestCase
 
     private function line(int $accountId, Direction $direction, int $pennies): JournalEntryLine
     {
-        return new JournalEntryLine(null, null, $accountId, $direction, Money::fromMinor($pennies));
+        return new JournalEntryLine(null, $accountId, $direction, Money::fromMinor($pennies));
     }
 
     /** @param JournalEntryLine[] $lines */
