@@ -67,7 +67,9 @@ return [
              * Example: 'collectors' => ['db' => null]
              * Expects: array
              */
-            'collectors' => [],
+            // The 'db' collector is disabled: persistence moved to Doctrine, so
+            // there's no Laminas\Db adapter for it to profile.
+            'collectors' => ['db' => null],
         ],
         'events' => [
             /**

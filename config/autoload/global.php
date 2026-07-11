@@ -13,8 +13,7 @@
  */
 
 return [
-    'db' => [
-        'driver' => 'Pdo_Sqlite',
-        'database' => __DIR__ . '/../../data/accounting.sqlite',
-    ],
+    // Persistence is handled by Doctrine ORM; its connection lives in
+    // doctrine.global.php. This file is kept as a placeholder for future
+    // environment-agnostic global configuration.
 ];

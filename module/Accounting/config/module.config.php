@@ -120,13 +120,15 @@ return [
             Service\JournalEntryLifecycle::class
             => ReflectionBasedAbstractFactory::class,
             Persistence\AccountRepository::class
-            => Persistence\ReflectionBasedAbstractFactory::class,
+            => ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryRepository::class
-            => Persistence\ReflectionBasedAbstractFactory::class,
+            => ReflectionBasedAbstractFactory::class,
             Persistence\AccountCommand::class
             => ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryCommand::class
             => ReflectionBasedAbstractFactory::class,
+            Persistence\Logging\QueryCollector::class
+            => InvokableFactory::class,
             EntityManagerInterface::class
             => Persistence\EntityManagerFactory::class
         ],
