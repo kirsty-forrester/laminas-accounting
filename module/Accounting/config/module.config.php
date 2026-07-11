@@ -1,6 +1,7 @@
 <?php
 namespace Accounting;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Laminas\ServiceManager\AbstractFactory\ReflectionBasedAbstractFactory;
 use Laminas\ServiceManager\Factory\InvokableFactory;
 use Laminas\Router\Http\Segment;
@@ -126,6 +127,8 @@ return [
             => ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryCommand::class
             => ReflectionBasedAbstractFactory::class,
+            EntityManagerInterface::class
+            => Persistence\EntityManagerFactory::class
         ],
     ],
 
