@@ -27,4 +27,14 @@ class Account
     {
         return $this->type;
     }
+
+    public function rename(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    public function changeType(AccountType $type): void
+    {
+        $this->type = $type;
+    }
 }

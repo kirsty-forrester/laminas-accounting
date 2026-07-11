@@ -120,7 +120,7 @@ return [
             Service\JournalEntryLifecycle::class
             => ReflectionBasedAbstractFactory::class,
             Persistence\AccountRepository::class
-            => Persistence\AccountRepositoryFactory::class,
+            => Persistence\ReflectionBasedAbstractFactory::class,
             Persistence\JournalEntryRepository::class
             => Persistence\JournalEntryRepositoryFactory::class,
             Persistence\AccountCommand::class
