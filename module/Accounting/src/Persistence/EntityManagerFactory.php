@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Accounting\Persistence;
 
+use Accounting\Persistence\Type\MoneyType;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMSetup;
@@ -15,6 +17,12 @@ class EntityManagerFactory
     public function __invoke(ContainerInterface $container): EntityManagerInterface
     {
         $config = $container->get('config')['doctrine'];
+
+        // Register custom DBAL types once. The registry is static/global, so
+        // guard against double-registration (tests, multiple EM builds).
+        if (! Type::hasType(MoneyType::NAME)) {
+            Type::addType(MoneyType::NAME, MoneyType::class);
+        }
 
         // 1. Build ORM configuration told to read mappings from XML files.
         $ormConfig = ORMSetup::createXMLMetadataConfiguration(
